@@ -21,6 +21,8 @@
 
   L.createApi = function (opts = {}) {
     const base = opts.base || '';
+    // Where course banner images load from: Brightspace itself (extension), a proxy (website), or nowhere.
+    const imageBase = opts.imageBase === undefined ? base : opts.imageBase;
     const fetchImpl = opts.fetch || ((url, init) => fetch(url, init));
     const mem = new Map();
     let versions = null;
@@ -113,8 +115,8 @@
             name: e.OrgUnit.Name,
             code: e.OrgUnit.Code || '',
             homeUrl: e.OrgUnit.HomeUrl || `/d2l/home/${e.OrgUnit.Id}`,
-            image: `${base}/d2l/api/lp/${lpv}/courses/${e.OrgUnit.Id}/image?height=320&width=800`,
-            hasImage: e.OrgUnit.ImageUrl !== null,
+            image: `${imageBase}/d2l/api/lp/${lpv}/courses/${e.OrgUnit.Id}/image?height=320&width=800`,
+            hasImage: imageBase !== null && e.OrgUnit.ImageUrl !== null,
             active: e.Access.IsActive !== false,
             start: e.Access.StartDate || null,
             end: e.Access.EndDate || null,

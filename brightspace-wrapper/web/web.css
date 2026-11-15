@@ -1,0 +1,70 @@
+/* Website-only styles: the connect screen and the demo banner. Built on the tokens in src/app.css. */
+.lumen-app.connect-page { min-height: 100vh; }
+.lumen-app .connect {
+  max-width: 1120px; margin: 0 auto; padding: 56px 24px 72px; display: grid; gap: 48px;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 520px); align-items: start; animation: lumen-in .3s var(--ease);
+}
+@media (max-width: 919px) { .lumen-app .connect { grid-template-columns: 1fr; gap: 28px; padding-top: 28px; } }
+.lumen-app .connect-hero { padding-top: 24px; }
+.lumen-app .brand-lg { display: flex; align-items: center; gap: 12px; font-family: var(--font-display); font-size: 26px; }
+.lumen-app .brand-lg .brand-mark { width: 44px; height: 44px; border-radius: 14px; }
+.lumen-app .connect-title { margin-top: 36px !important; font-family: var(--font-display); font-size: clamp(36px, 5.5vw, 57px); line-height: 1.08; letter-spacing: -.5px; }
+.lumen-app .connect-lede { margin-top: 18px !important; max-width: 520px; font-size: 18px; line-height: 28px; color: var(--md-on-surface-variant); }
+.lumen-app .connect-points { list-style: none; padding: 0; margin: 28px 0 0; display: grid; gap: 12px; }
+.lumen-app .connect-points li { display: flex; align-items: center; gap: 12px; font-size: 15px; }
+.lumen-app .connect-points .icon { color: var(--md-primary); background: var(--md-primary-container); border-radius: 50%; padding: 6px; --icon-size: 32px; }
+@media (max-width: 919px) { .lumen-app .connect-points { display: none; } .lumen-app .connect-title { margin-top: 20px !important; } }
+
+.lumen-app .connect-card { padding: 28px; border-radius: var(--radius-xl); background: var(--md-surface-container-low); border: 1px solid var(--md-outline-variant); }
+.lumen-app .step { display: flex; align-items: center; gap: 12px; font-family: var(--font-display); font-size: 20px; line-height: 28px; margin: 4px 0 14px !important; }
+.lumen-app .step + * { margin-bottom: 24px; }
+.lumen-app .step-n { width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; background: var(--md-primary); color: var(--md-on-primary); font-size: 14px; font-weight: 500; font-family: var(--font); }
+.lumen-app .schools { display: grid; gap: 8px; }
+.lumen-app .school {
+  position: relative; isolation: isolate; display: flex; align-items: center; gap: 14px; padding: 12px 16px; border-radius: var(--radius-l); text-align: left;
+  border: 1px solid var(--md-outline-variant); background: var(--md-surface-container-lowest);
+}
+.lumen-app .school::after { content: ""; position: absolute; inset: 0; border-radius: inherit; background: currentColor; opacity: 0; z-index: -1; transition: opacity .15s; }
+.lumen-app .school:hover::after { opacity: .06; }
+.lumen-app .school.on { border-color: var(--md-primary); background: var(--md-secondary-container); color: var(--md-on-secondary-container); }
+.lumen-app .school > .icon { color: var(--md-primary); }
+.lumen-app .school-mark { width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; flex: none; color: var(--md-surface); font-family: var(--font-display); font-size: 20px; }
+.lumen-app .school-mark.alt { background: var(--md-surface-container-highest); color: var(--md-on-surface-variant); }
+.lumen-app .school-text { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.lumen-app .school-name { font-weight: 500; font-size: 15px; }
+.lumen-app .school-host { font-size: 12px; color: var(--md-on-surface-variant); }
+.lumen-app .other-host { margin-top: 4px; background: var(--md-surface-container-highest); }
+
+.lumen-app .methods { display: grid; gap: 12px; }
+.lumen-app .method { padding: 18px; border-radius: var(--radius-l); background: var(--md-surface-container-lowest); border: 1px solid var(--md-outline-variant); display: grid; gap: 12px; }
+.lumen-app .method.recommended { border: 2px solid var(--md-primary); }
+.lumen-app .method.disabled .method-title, .lumen-app .method.disabled .method-sub { opacity: .7; }
+.lumen-app .method-head { display: flex; gap: 14px; align-items: flex-start; }
+.lumen-app .method-icon { width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; flex: none; background: var(--md-primary-container); color: var(--md-on-primary-container); }
+.lumen-app .method-title { font-weight: 500; font-size: 16px; line-height: 22px; }
+.lumen-app .method-sub { color: var(--md-on-surface-variant); }
+.lumen-app .method-state { display: flex; gap: 8px; align-items: flex-start; font-size: 13px; color: var(--md-on-surface-variant); }
+.lumen-app .method-state .icon { --icon-size: 18px; flex: none; }
+.lumen-app .method-state.ok { color: var(--md-success); font-weight: 500; }
+.lumen-app .method-actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
+.lumen-app .method-actions button:disabled { opacity: .45; cursor: not-allowed; }
+
+.lumen-app .connect-status:empty { display: none; }
+.lumen-app .connect-status { margin-bottom: 12px; }
+.lumen-app .notice { display: flex; align-items: flex-start; gap: 10px; padding: 12px 14px; border-radius: var(--radius-m); background: var(--md-secondary-container); color: var(--md-on-secondary-container); }
+.lumen-app .notice .icon { --icon-size: 20px; flex: none; }
+.lumen-app .notice.error { background: var(--md-error-container); color: var(--md-on-error-container); }
+.lumen-app .notice a { text-decoration: underline; font-weight: 500; }
+.lumen-app .install-steps { margin: 0; padding-left: 20px; display: grid; gap: 10px; color: var(--md-on-surface); }
+.lumen-app .install-steps a { color: var(--md-primary); text-decoration: underline; }
+.lumen-app .install-steps code { padding: 1px 6px; border-radius: 6px; background: var(--md-surface-container-highest); font-size: 13px; }
+
+.lumen-app .demo-banner {
+  position: sticky; top: 0; z-index: 31; display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 40px; padding: 0 12px;
+  background: var(--md-tertiary-container); color: var(--md-on-tertiary-container); font-weight: 500;
+}
+.lumen-app .demo-banner .icon { --icon-size: 18px; }
+.lumen-app .demo-banner .text-btn { height: 32px; color: inherit; text-decoration: underline; }
+.lumen-app:has(.demo-banner) .top-bar { top: 40px; }
+.lumen-app:has(.demo-banner) .drawer { top: calc(var(--top) + 40px); height: calc(100vh - var(--top) - 40px); }
+.lumen-app:has(.demo-banner) .tabs { top: calc(var(--top) + 40px); }

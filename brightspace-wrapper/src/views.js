@@ -551,7 +551,7 @@
         h('div.setting-label', 'Density'),
         seg('density', [['comfortable', 'Comfortable'], ['compact', 'Compact']]),
         toggle('newTab', 'Open Brightspace pages in a new tab', 'Keeps Lumen open while you read files and submit work.'),
-        toggle('enabled', 'Replace the Brightspace homepage', 'When off, Brightspace looks normal and Lumen is a button away.'),
+        ctx.web ? null : toggle('enabled', 'Replace the Brightspace homepage', 'When off, Brightspace looks normal and Lumen is a button away.'),
         h('p.muted.small', 'Lumen only reads from Brightspace. Hidden classes and items you tick off are stored in this browser.')),
       actions: [{ label: 'Done', primary: true }],
     });

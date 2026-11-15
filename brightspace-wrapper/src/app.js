@@ -130,7 +130,9 @@
         courses.length === 0 && store.courses ? h('div.nav-hint', 'No current classes') : null,
         h('div.nav-divider'),
         navItem('#/archived', 'inbox', 'Past & hidden classes', r === 'archived'),
-        h('a.nav-item', { href: `${api.base}/d2l/home?lumen=off`, title: 'Classic Brightspace' }, h('span.nav-icon', icon('swap_horiz')), h('span.nav-label', 'Classic Brightspace')),
+        opts.web
+          ? h('a.nav-item', { href: `${api.base}/d2l/home`, target: '_blank', rel: 'noopener', title: 'Open Brightspace' }, h('span.nav-icon', icon('open_in_new')), h('span.nav-label', 'Open Brightspace'))
+          : h('a.nav-item', { href: `${api.base}/d2l/home?lumen=off`, title: 'Classic Brightspace' }, h('span.nav-icon', icon('swap_horiz')), h('span.nav-label', 'Classic Brightspace')),
       ].flat().filter(Boolean));
     }
 
@@ -140,9 +142,10 @@
         title: me ? `${me.FirstName} ${me.LastName}` : 'Account',
         body: h('div.stack',
           me && h('p.muted', me.UniqueName || ''),
-          h('p', 'Lumen reads your classes straight from Brightspace using the session you are already signed into. Nothing is sent anywhere else.'),
-          h('a.tonal-btn', { href: `${api.base}/d2l/lp/preferences/preferences_main.d2l?ou=6606` }, icon('tune'), 'Brightspace account settings'),
-          h('a.text-btn', { href: `${api.base}/d2l/logout` }, icon('login'), 'Sign out of Brightspace')),
+          h('p', opts.connectionNote || 'Lumen reads your classes straight from Brightspace using the session you are already signed into. Nothing is sent anywhere else.'),
+          opts.onDisconnect
+            ? h('button.tonal-btn', { type: 'button', onclick: opts.onDisconnect }, icon('swap_horiz'), 'Disconnect / switch school')
+            : h('a.text-btn', { href: `${api.base}/d2l/logout` }, icon('login'), 'Sign out of Brightspace')),
         actions: [{ label: 'Close' }],
       });
     }
@@ -187,7 +190,7 @@
       return { name: 'home', params: {} };
     }
 
-    const ctx = { api, store, root, navigate: (hash) => { location.hash = hash; }, applyTheme, render: () => render() };
+    const ctx = { api, store, root, web: !!opts.web, navigate: (hash) => { location.hash = hash; }, applyTheme, render: () => render() };
     let lastRouteKey = '';
 
     function render() {

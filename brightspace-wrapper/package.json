@@ -1,0 +1,11 @@
+{
+  "name": "lumen-brightspace",
+  "version": "1.1.0",
+  "private": true,
+  "description": "Lumen: a Material You / Classroom-style interface for Brightspace, as a browser extension and a website.",
+  "type": "module",
+  "scripts": {
+    "start": "node web/server.mjs"
+  },
+  "engines": { "node": ">=18" }
+}

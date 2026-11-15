@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Allow website access – Lumen</title>
+  <style>
+    :root { color-scheme: light dark; --p: oklch(0.47 0.15 270); --pc: oklch(0.91 0.06 270); --s: oklch(0.985 0.006 270); --on: oklch(0.22 0.012 270); --v: oklch(0.43 0.02 270); }
+    @media (prefers-color-scheme: dark) { :root { --p: oklch(0.82 0.1 270); --pc: oklch(0.37 0.1 270); --s: oklch(0.2 0.009 270); --on: oklch(0.92 0.008 270); --v: oklch(0.8 0.015 270); } }
+    body { margin: 0; padding: 24px; font: 14px/20px "Google Sans Text", Roboto, system-ui, sans-serif; background: var(--s); color: var(--on); }
+    h1 { font: 400 22px/28px "Google Sans", Roboto, system-ui, sans-serif; margin: 0 0 12px; }
+    .origin { display: inline-block; margin: 4px 0 12px; padding: 6px 12px; border-radius: 8px; background: var(--pc); font-weight: 500; word-break: break-all; }
+    ul { padding-left: 20px; color: var(--v); margin: 8px 0 20px; }
+    .row { display: flex; justify-content: flex-end; gap: 8px; }
+    button { font: 500 14px/1 inherit; height: 40px; padding: 0 20px; border-radius: 20px; border: 0; cursor: pointer; }
+    #deny { background: transparent; color: var(--p); }
+    #allow { background: var(--p); color: var(--s); }
+  </style>
+</head>
+<body>
+  <h1>Let this website use Lumen?</h1>
+  <div class="origin" id="origin"></div>
+  <ul>
+    <li>It can <b>read</b> your Brightspace classes, content, due dates and grades while you're signed in to Brightspace.</li>
+    <li>It can't submit, change or delete anything.</li>
+    <li>Only allow websites you trust.</li>
+  </ul>
+  <div class="row"><button id="deny">Deny</button><button id="allow">Allow</button></div>
+  <script src="consent.js"></script>
+</body>
+</html>

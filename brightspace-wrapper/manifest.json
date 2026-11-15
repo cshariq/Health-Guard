@@ -2,9 +2,15 @@
   "manifest_version": 3,
   "name": "Lumen for Brightspace",
   "short_name": "Lumen",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "A clean, Material You–style home for Brightspace: classes, to-do, calendar and grades in one organized place.",
-  "icons": { "16": "assets/icon-16.png", "32": "assets/icon-32.png", "48": "assets/icon-48.png", "128": "assets/icon-128.png" },
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAt01TJvPz+nGsGQps+DPTxC6JhzbKzjPMqMZsDK04ENdbBu9TmeND0mwg7JP7auLqfWHb7mAYA4z95Y9qaxsWrumfASp4AhZD/b3ja4HmiClc8a+TK6AsNQQBTH3jV6O2ue4AFWdRHTXULiwaCvXil7oWl3dJY6WjQofdYzqUWGAVcllFKd8eIMZT7ya0rYhrgePdjFqdvLh19E3rLgtQvDRMfz8404yyfjMI6eKWsxbr2LPR28ppeND2JqMxmGpdBdjny1ISsUe03wZkSnKOup+jWa8WFJbk0Bm/Zs4h0GLSvpfOMORCTX+0CnVR/vC3OAGZzffQ49m+n0H7wwirEQIDAQAB",
+  "icons": {
+    "16": "assets/icon-16.png",
+    "32": "assets/icon-32.png",
+    "48": "assets/icon-48.png",
+    "128": "assets/icon-128.png"
+  },
   "host_permissions": [
     "https://brightspace.carleton.ca/*",
     "https://learn.uwaterloo.ca/*",
@@ -17,8 +23,18 @@
         "https://learn.uwaterloo.ca/d2l/home*",
         "https://*.brightspace.com/d2l/home*"
       ],
-      "js": ["src/icons.js", "src/theme.js", "src/ui.js", "src/api.js", "src/views.js", "src/app.js", "src/boot.js"],
-      "css": ["src/app.css"],
+      "js": [
+        "src/icons.js",
+        "src/theme.js",
+        "src/ui.js",
+        "src/api.js",
+        "src/views.js",
+        "src/app.js",
+        "src/boot.js"
+      ],
+      "css": [
+        "src/app.css"
+      ],
       "run_at": "document_start"
     },
     {
@@ -35,9 +51,28 @@
         "https://learn.uwaterloo.ca/d2l/login*",
         "https://*.brightspace.com/d2l/login*"
       ],
-      "js": ["src/icons.js", "src/ui.js", "src/fab.js"],
-      "css": ["src/fab.css"],
+      "js": [
+        "src/icons.js",
+        "src/ui.js",
+        "src/fab.js"
+      ],
+      "css": [
+        "src/fab.css"
+      ],
       "run_at": "document_idle"
     }
-  ]
+  ],
+  "permissions": [
+    "storage",
+    "scripting"
+  ],
+  "background": {
+    "service_worker": "src/bridge.js"
+  },
+  "externally_connectable": {
+    "matches": [
+      "http://localhost/*",
+      "http://127.0.0.1/*"
+    ]
+  }
 }

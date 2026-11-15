@@ -131,6 +131,8 @@
           const n = attr.name.toLowerCase();
           const keep = (n === 'href' && child.tagName === 'A') || (n === 'src' && child.tagName === 'IMG') || n === 'alt' || n === 'colspan' || n === 'rowspan';
           if (!keep || /^\s*javascript:/i.test(attr.value)) child.removeAttribute(attr.name);
+          // On the website, Brightspace's relative links must point back at Brightspace.
+          else if (L.contentBase && (n === 'href' || n === 'src') && attr.value.startsWith('/') && !attr.value.startsWith('//')) attr.value = L.contentBase + attr.value;
         }
         if (child.tagName === 'A') { child.target = '_blank'; child.rel = 'noopener noreferrer'; }
         if (child.tagName === 'IMG') child.loading = 'lazy';
@@ -144,7 +146,7 @@
 
   /* ---------- settings (per Brightspace site, synchronous so boot can decide instantly) ---------- */
   const SKEY = 'lumen:settings';
-  const DEFAULTS = { enabled: true, mode: 'system', seed: 270, newTab: false, hidden: [], density: 'comfortable', courseView: 'grid', termFilter: 'current' };
+  const DEFAULTS = (L.settingsDefaults = { enabled: true, mode: 'system', seed: 270, newTab: false, hidden: [], density: 'comfortable', courseView: 'grid', termFilter: 'current' });
   L.settings = {
     get() {
       try { return { ...DEFAULTS, ...JSON.parse(localStorage.getItem(SKEY) || '{}') }; } catch { return { ...DEFAULTS }; }
@@ -209,7 +211,7 @@
       h('div.empty-title', auth ? 'You’re signed out of Brightspace' : 'Couldn’t load this from Brightspace'),
       h('div.empty-sub', auth ? 'Sign in again and Lumen will pick up where you left off.' : (err && err.message) || 'Check your connection and try again.'),
       auth
-        ? h('a.filled-btn', { href: '/d2l/login' }, L.icon('login'), 'Sign in')
+        ? h('a.filled-btn', { href: L.loginUrl || '/d2l/login' }, L.icon('login'), 'Sign in')
         : retry && h('button.tonal-btn', { onclick: retry }, L.icon('refresh'), 'Try again'));
   };
 
