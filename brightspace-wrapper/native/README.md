@@ -23,8 +23,8 @@ Each app has the same layers, written natively per platform:
 
 | Layer | iOS/macOS (Swift) | Android (Kotlin) | Windows (C#) |
 |---|---|---|---|
-| Models | `Models.swift` | `Models.kt` | `Models.cs` |
-| API client (read-only Valence) | `BrightspaceAPI.swift` | `BrightspaceApi.kt` | `Models.cs` (`BrightspaceApi`) |
+| Models | `Sources/LumenCore/Models.swift` | `Models.kt` | `Models.cs` |
+| API client (read-only Valence) | `Sources/LumenCore/BrightspaceAPI.swift` | `BrightspaceApi.kt` | `Models.cs` (`BrightspaceApi`) |
 | Dynamic course color | `Theme.swift` | `Theme.kt` | `Palette.cs` |
 | State | `AppStore.swift` | `AppViewModel.kt` | `AppState.cs` |
 | Login web view (only web view) | `LoginWebView` in `LumenApp.swift` | `LoginWebView` in `MainActivity.kt` | `LoginWindow.xaml.cs` |
@@ -34,15 +34,14 @@ Screens: **Classes** (hero, due-soon, course cards), **Class** (Stream / Classwo
 Grades), **To-do**, **Calendar** (iOS/Android), **Grades**, **Settings**. Each course keeps a
 stable color computed the same way as the web app, so a class looks the same everywhere.
 
-## iOS & macOS (Swift / SwiftUI)
+## iOS, iPadOS & macOS (Swift / SwiftUI)
 
-`native/ios/Lumen/` — pure SwiftUI; cookies via `WKHTTPCookieStore`, requests via `URLSession`.
+`native/ios/` — open **`Lumen.xcodeproj`**, pick a simulator or *My Mac*, press Run. One target covers
+iPhone, iPad and Mac. Full instructions and status: [ios/README.md](ios/README.md).
 
-1. Xcode → **File ▸ New ▸ Project ▸ App** (SwiftUI, name it Lumen), then add all `.swift`
-   files from `native/ios/Lumen/` to the target (or point the project at this folder).
-2. iOS 16+ / macOS 13+ (uses `NavigationStack`, `.task(id:)`). Build for iOS, or run as
-   **Mac Catalyst** for macOS (same code).
-3. No third-party dependencies.
+The platform-neutral core (models + API client) is compiled and tested on Linux (`swift test`, 8 tests,
+including against a live Lumen Classes server). The SwiftUI layer is syntax-checked and hand-reviewed but
+has not been compiled, because SwiftUI only exists on Apple platforms.
 
 ## Android (Kotlin / Jetpack Compose)
 
@@ -102,14 +101,12 @@ login, requests via `HttpClient`.
 | Platform | Compiled | Tested |
 |---|---|---|
 | **Android** | ✅ builds an APK | ✅ 10 tests: real API client + real screens against the mock |
-| iOS / macOS | ❌ not compiled | — |
+| **iOS / macOS core** | ✅ on Linux | ✅ 8 tests, incl. a live Lumen Classes server |
+| iOS / macOS SwiftUI screens | ❌ parsed + reviewed only | — needs Xcode |
 | Windows | ❌ not compiled | — |
 
-iOS and Windows were written in a Linux environment, so expect a few small fixes on first build in
-Xcode / Visual Studio. One known difference: their login screens still decide "signed in" by looking
-for a cookie named `d2lSessionVal`, whereas Android verifies with a real `whoami` call. If a school
-sets that cookie before login, those two would continue too early — porting Android's approach is
-the fix.
+Windows still decides "signed in" by looking for a cookie named `d2lSessionVal`; Android and Apple verify
+with a real `whoami` call. Porting that is the first thing to do when Windows gets attention.
 
 ## Privacy
 

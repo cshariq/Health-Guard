@@ -86,10 +86,10 @@ struct StreamTab: View {
         .task(id: courseId) { await reload() }
     }
     private func reload() async {
-        error = nil
+        self.error = nil
         do { news = try await store.api?.news(courseId) ?? [] }
-        catch let e as APIError { error = (e.isSignedOut ? "signed_out" : "\(e)") }
-        catch { error = error.localizedDescription }
+        catch let e as APIError { self.error = e.isSignedOut ? "signed_out" : "\(e)" }
+        catch let other { self.error = other.localizedDescription }
     }
 }
 
@@ -118,10 +118,10 @@ struct ClassworkTab: View {
     }
     private func filtered(_ ms: [Module]) -> [Module] { ms }   // filtering handled inside ModuleDisclosure
     private func reload() async {
-        error = nil
+        self.error = nil
         do { modules = try await store.api?.toc(courseId) ?? [] }
-        catch let e as APIError { error = e.isSignedOut ? "signed_out" : "\(e)" }
-        catch { error = error.localizedDescription }
+        catch let e as APIError { self.error = e.isSignedOut ? "signed_out" : "\(e)" }
+        catch let other { self.error = other.localizedDescription }
     }
 }
 
@@ -266,10 +266,10 @@ struct GradesTab: View {
     }
     private func trim(_ v: Double) -> String { v == v.rounded() ? String(Int(v)) : String(format: "%.1f", v) }
     private func reload() async {
-        error = nil
+        self.error = nil
         do { grades = try await store.api?.grades(courseId) }
-        catch let e as APIError { error = e.isSignedOut ? "signed_out" : "\(e)" }
-        catch { error = error.localizedDescription }
+        catch let e as APIError { self.error = e.isSignedOut ? "signed_out" : "\(e)" }
+        catch let other { self.error = other.localizedDescription }
     }
 }
 
@@ -282,4 +282,3 @@ struct GradesTab: View {
     }.frame(maxWidth: .infinity).padding(30)
 }
 
-extension APIError { var isSignedOut: Bool { if case .signedOut = self { return true }; return false } }

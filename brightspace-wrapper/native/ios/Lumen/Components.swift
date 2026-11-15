@@ -37,17 +37,7 @@ struct HTMLText: View {
             .lineLimit(lineLimit)
             .fixedSize(horizontal: false, vertical: true)
     }
-    static func plain(_ html: String) -> String {
-        var s = html
-        s = s.replacingOccurrences(of: "(?i)<br\\s*/?>", with: "\n", options: .regularExpression)
-        s = s.replacingOccurrences(of: "(?i)</p>|</li>|</div>|</h[1-6]>", with: "\n", options: .regularExpression)
-        s = s.replacingOccurrences(of: "(?i)<li[^>]*>", with: "• ", options: .regularExpression)
-        s = s.replacingOccurrences(of: "<[^>]+>", with: "", options: .regularExpression)
-        s = s.replacingOccurrences(of: "&nbsp;", with: " ").replacingOccurrences(of: "&amp;", with: "&")
-            .replacingOccurrences(of: "&lt;", with: "<").replacingOccurrences(of: "&gt;", with: ">").replacingOccurrences(of: "&#39;", with: "'").replacingOccurrences(of: "&quot;", with: "\"")
-        s = s.replacingOccurrences(of: "\n{3,}", with: "\n\n", options: .regularExpression)
-        return s.trimmingCharacters(in: .whitespacesAndNewlines)
-    }
+    static func plain(_ html: String) -> String { PlainText.from(html: html) }
 }
 
 /// A work item row with a done toggle (To-do and the course Work tab).

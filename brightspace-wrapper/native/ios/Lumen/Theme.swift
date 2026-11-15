@@ -4,14 +4,6 @@
 import SwiftUI
 
 enum Theme {
-    /// Stable hue (degrees) for a course, from a hash of its code/name — mirrors the web app.
-    static func hue(for key: String) -> Double {
-        var x: UInt32 = 2166136261
-        for b in key.utf8 { x = (x ^ UInt32(b)) &* 16777619 }
-        let palette: [Double] = [265, 200, 150, 30, 340, 85, 230, 300, 175, 10, 120, 250]
-        return palette[Int(x % UInt32(palette.count))]
-    }
-
     static func accent(_ hue: Double, _ dark: Bool) -> Color {
         dark ? Color(hue: hue / 360, saturation: 0.55, brightness: 0.85)
              : Color(hue: hue / 360, saturation: 0.72, brightness: 0.70)

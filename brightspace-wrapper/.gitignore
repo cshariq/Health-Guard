@@ -13,3 +13,10 @@ local.properties
 
 # Lumen Classes data (SQLite database + uploaded files)
 classes/data/
+
+# Swift package build output
+.build/
+native/ios/.build/
+native/ios/.swiftpm/
+native/ios/Lumen.xcodeproj/xcuserdata/
+native/ios/Lumen.xcodeproj/project.xcworkspace/xcuserdata/

@@ -88,7 +88,8 @@ class ScreensRenderTest {
 
         rule.onNodeWithText("To-do").performClick(); rule.waitForIdle()
         rule.onNodeWithText("Assigned").assertExists()
-        rule.onAllNodesWithText("Quiz 4 – Priority queues")[0].assertExists()
+        // (An item due in a few days, so this holds at any time of day.)
+        rule.onAllNodesWithText("Assignment 3: Skip lists and hashing")[0].assertExists()
         shot("03-todo")
 
         rule.onNodeWithText("Calendar").performClick(); rule.waitForIdle()

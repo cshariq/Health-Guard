@@ -59,7 +59,8 @@ class BrightspaceApiTest {
         assertEquals(WorkKind.DISCUSSION, work.first { it.title.startsWith("Discussion: Sleep") }.kind)
         assertEquals("completed items from DateCompleted", 3, work.count { it.completed })
         val missing = work.filter { it.status(null) == WorkStatus.MISSING }.map { it.title }.toSet()
-        assertEquals(setOf("WeBWorK Set 5: Matrix inverses", "Discussion: Sleep and learning"), missing)
+        // ("Quiz 4" is due at 6 pm today in the sample data, so it joins this set in the evening.)
+        assertEquals(setOf("WeBWorK Set 5: Matrix inverses", "Discussion: Sleep and learning"), missing - "Quiz 4 – Priority queues")
         assertTrue("items link into Brightspace", work.first { it.title.startsWith("Quiz 4") }.url!!.startsWith(host))
         assertTrue("a done override beats the date", work.first { it.title.startsWith("WeBWorK Set 5") }.status(true) == WorkStatus.DONE)
     }

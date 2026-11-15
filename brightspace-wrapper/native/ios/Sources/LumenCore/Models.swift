@@ -58,7 +58,9 @@ struct Course: Identifiable, Hashable {
     var pinned: Bool
     var hasImage: Bool
 
-    var hue: Double { Theme.hue(for: code.isEmpty ? name : code) }
+    /// Assigned by position so neighbouring classes never share a color; falls back to a hash.
+    var hueOverride: Double? = nil
+    var hue: Double { hueOverride ?? Palette.hue(for: code.isEmpty ? name : code) }
 
     var termLabel: String {
         guard let d = start else {
@@ -183,3 +185,46 @@ struct Grades {
 }
 
 enum APIError: Error { case signedOut, http(Int), network(String), badURL }
+extension APIError { var isSignedOut: Bool { if case .signedOut = self { return true }; return false } }
+
+/// Course colors: a stable hue per class, matching the web and Android apps.
+enum Palette {
+    static let seed: Double = 265
+    static let distinct: [Double] = [265, 150, 30, 230, 340, 85, 195, 300, 10, 120, 250, 60]
+
+    static func hue(for key: String) -> Double {
+        var x: UInt32 = 2166136261
+        for b in key.utf8 { x = (x ^ UInt32(b)) &* 16777619 }
+        let palette: [Double] = [265, 200, 150, 30, 340, 85, 230, 300, 175, 10, 120, 250]
+        return palette[Int(x % UInt32(palette.count))]
+    }
+    /// Give every class its own color, stable by id.
+    static func withDistinctHues(_ courses: [Course]) -> [Course] {
+        let order = courses.map(\.id).sorted()
+        return courses.map { c in var c = c; c.hueOverride = distinct[(order.firstIndex(of: c.id) ?? 0) % distinct.count]; return c }
+    }
+}
+
+/// HTML → readable plain text (announcements, instructions), so the UI never needs a web view for them.
+enum PlainText {
+    static func from(html: String) -> String {
+        var s = html
+        s = s.replacingOccurrences(of: "(?i)<br\\s*/?>", with: "\n", options: .regularExpression)
+        s = s.replacingOccurrences(of: "(?i)</p>|</li>|</div>|</h[1-6]>", with: "\n", options: .regularExpression)
+        s = s.replacingOccurrences(of: "(?i)<li[^>]*>", with: "• ", options: .regularExpression)
+        s = s.replacingOccurrences(of: "<[^>]+>", with: "", options: .regularExpression)
+        for (a, b) in [("&nbsp;", " "), ("&lt;", "<"), ("&gt;", ">"), ("&#39;", "'"), ("&quot;", "\""), ("&amp;", "&")] { s = s.replacingOccurrences(of: a, with: b) }
+        s = s.replacingOccurrences(of: "\n{3,}", with: "\n\n", options: .regularExpression)
+        return s.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+}
+
+/// Drop duplicates the feed can return for the same item.
+func dedupeWork(_ items: [WorkItem]) -> [WorkItem] {
+    var seen = Set<String>(); var out: [WorkItem] = []
+    for w in items {
+        let k = "\(w.courseId):\(w.kind.rawValue):\(w.title):\(w.due?.timeIntervalSince1970 ?? 0)"
+        if seen.insert(k).inserted { out.append(w) }
+    }
+    return out
+}

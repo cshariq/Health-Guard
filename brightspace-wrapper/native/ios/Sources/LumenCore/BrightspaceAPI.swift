@@ -2,13 +2,17 @@
 //  Native, read-only client for the Brightspace (D2L Valence) REST API.
 //
 //  Auth is the session cookie the user created by signing in on the official
-//  Brightspace page inside LoginView's WKWebView. We read that cookie from the
-//  shared WKWebsiteDataStore and attach it to URLSession requests — native HTTP
-//  isn't bound by the browser's CORS rules, so this works where a website can't.
-//  Nothing is ever written back to Brightspace.
+//  Brightspace page (or a Lumen Classes server) in the app's login web view. The app
+//  hands this client a `cookieProvider` that reads it from the web view's cookie store;
+//  native HTTP isn't bound by the browser's CORS rules, so this works where a website
+//  can't. Nothing is ever written back.
+//
+//  This file is platform-neutral (no UIKit/WebKit) so it also builds and is tested on Linux.
 
 import Foundation
-import WebKit
+#if canImport(FoundationNetworking)
+import FoundationNetworking
+#endif
 
 actor BrightspaceAPI {
     private let host: String                      // e.g. https://brightspace.carleton.ca
@@ -16,7 +20,11 @@ actor BrightspaceAPI {
     private var versions: [String: String] = [:]
     private var cache: [String: (Date, Any)] = [:]
 
-    init(host: String) {
+    private let cookieProvider: @Sendable (String) async -> String
+
+    /// - Parameter cookieProvider: returns the `Cookie` header value for the given host.
+    init(host: String, cookieProvider: @escaping @Sendable (String) async -> String) {
+        self.cookieProvider = cookieProvider
         self.host = host.hasSuffix("/") ? String(host.dropLast()) : host
         let cfg = URLSessionConfiguration.ephemeral
         cfg.httpShouldSetCookies = false
@@ -26,16 +34,8 @@ actor BrightspaceAPI {
     }
 
     func clearCache() { cache.removeAll() }
-
-    // MARK: cookies
-    private func cookieHeader() async -> String {
-        let cookies = await WKWebsiteDataStore.default().httpCookieStore.allCookies()
-        guard let h = URL(string: host)?.host else { return "" }
-        return cookies
-            .filter { h.hasSuffix($0.domain) || $0.domain.hasSuffix(h) || $0.domain == h }
-            .map { "\($0.name)=\($0.value)" }
-            .joined(separator: "; ")
-    }
+    /// The cookie header currently in use (for tests and diagnostics).
+    func debugCookie() async -> String { await cookieProvider(host) }
 
     // MARK: core GET
     private func get(_ path: String, cache useCache: Bool = true) async throws -> Any {
@@ -43,7 +43,7 @@ actor BrightspaceAPI {
         guard let url = URL(string: host + path) else { throw APIError.badURL }
         var req = URLRequest(url: url)
         req.setValue("application/json", forHTTPHeaderField: "Accept")
-        let cookie = await cookieHeader()
+        let cookie = await cookieProvider(host)
         if !cookie.isEmpty { req.setValue(cookie, forHTTPHeaderField: "Cookie") }
         do {
             let (data, resp) = try await session.data(for: req)
@@ -263,11 +263,5 @@ enum Kind {
         if u.contains("discussion") { return .discussion }
         if u.contains("survey") { return .survey }
         return .content
-    }
-}
-
-extension WKHTTPCookieStore {
-    func allCookies() async -> [HTTPCookie] {
-        await withCheckedContinuation { c in getAllCookies { c.resume(returning: $0) } }
     }
 }

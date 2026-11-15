@@ -97,7 +97,7 @@ struct CalendarView: View {
         let evs = events(day)
         HStack(alignment: .top, spacing: 12) {
             VStack(spacing: 2) {
-                Text(day.formatted(.dateTime.weekday(.abbreviated))).font(.caption2).foregroundStyle(isToday ? .tint : .secondary)
+                Text(day.formatted(.dateTime.weekday(.abbreviated))).font(.caption2).foregroundStyle(isToday ? Color.accentColor : Color.secondary)
                 Text("\(Calendar.current.component(.day, from: day))").font(.title3.weight(.semibold))
                     .foregroundStyle(isToday ? Color.white : .primary)
                     .frame(width: 36, height: 36).background(isToday ? Color.accentColor : .clear, in: Circle())

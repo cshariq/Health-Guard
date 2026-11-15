@@ -2,7 +2,6 @@
 //  App state: the connected school, loaded data, per-item "done" ticks, and settings.
 
 import SwiftUI
-import Combine
 
 struct School: Identifiable, Hashable {
     let id: String
@@ -15,7 +14,10 @@ struct School: Identifiable, Hashable {
     ]
 }
 
-struct Connection: Codable, Equatable { var host: String; var schoolName: String }
+struct Connection: Codable, Equatable {
+    var host: String
+    var schoolName: String
+}
 
 enum ThemeMode: String, CaseIterable { case system, light, dark }
 
@@ -27,32 +29,48 @@ final class AppStore: ObservableObject {
     @Published var work: [WorkItem] = []
     @Published var loading = false
     @Published var loadError: String?
-    @Published private(set) var doneOverrides: [String: Bool]
-    @AppStorage("themeMode") var themeModeRaw: String = ThemeMode.system.rawValue
-    @AppStorage("hiddenCourses") private var hiddenCoursesRaw: String = ""
+    @Published var browsing: BrowseTarget?
+    @Published private(set) var doneOverrides: [String: Bool] = [:]
+    @Published var themeModeRaw: String = ThemeMode.system.rawValue { didSet { defaults.set(themeModeRaw, forKey: Keys.theme) } }
+    @Published var hiddenCourses: Set<Int> = [] { didSet { defaults.set(Array(hiddenCourses), forKey: Keys.hidden) } }
 
     private(set) var api: BrightspaceAPI?
+    private let defaults = UserDefaults.standard
+    private enum Keys { static let connection = "lumen.connection", done = "lumen.done", theme = "lumen.theme", hidden = "lumen.hidden" }
 
     init() {
-        if let data = UserDefaults.standard.data(forKey: Self.connKey),
-           let c = try? JSONDecoder().decode(Connection.self, from: data) {
-            connection = c
-            api = BrightspaceAPI(host: c.host)
+        themeModeRaw = defaults.string(forKey: Keys.theme) ?? ThemeMode.system.rawValue
+        hiddenCourses = Set((defaults.array(forKey: Keys.hidden) as? [Int]) ?? [])
+        doneOverrides = (defaults.dictionary(forKey: Keys.done) as? [String: Bool]) ?? [:]
+        if let data = defaults.data(forKey: Keys.connection), let saved = try? JSONDecoder().decode(Connection.self, from: data) {
+            connection = saved
+            api = Self.makeAPI(saved.host)
         }
-        doneOverrides = (UserDefaults.standard.dictionary(forKey: Self.doneKey) as? [String: Bool]) ?? [:]
+    }
+
+    private static func makeAPI(_ host: String) -> BrightspaceAPI {
+        BrightspaceAPI(host: host) { await WebCookies.header(for: $0) }
     }
 
     // MARK: connection
     func connect(host: String, schoolName: String) {
         let c = Connection(host: host, schoolName: schoolName)
         connection = c
-        api = BrightspaceAPI(host: host)
-        if let data = try? JSONEncoder().encode(c) { UserDefaults.standard.set(data, forKey: Self.connKey) }
+        api = Self.makeAPI(host)
+        if let data = try? JSONEncoder().encode(c) { defaults.set(data, forKey: Keys.connection) }
         Task { await load() }
     }
+
     func signOut() {
         connection = nil; api = nil; me = nil; courses = []; work = []; loadError = nil
-        UserDefaults.standard.removeObject(forKey: Self.connKey)
+        defaults.removeObject(forKey: Keys.connection)
+        Task { await WebCookies.clear() }
+    }
+
+    /// True for links on the connected school's site (those open in the in-app browser).
+    func isSchoolURL(_ url: URL) -> Bool {
+        guard let c = connection, let schoolHost = URL(string: c.host)?.host, let host = url.host else { return false }
+        return host.lowercased() == schoolHost.lowercased()
     }
 
     // MARK: loading
@@ -61,33 +79,22 @@ final class AppStore: ObservableObject {
         loading = true; loadError = nil
         if force { await api.clearCache() }
         do {
-            async let meT = try? await api.whoami()
-            let cs = try await api.courses()
-            me = await meT
-            courses = assignColors(cs)
+            let who = try? await api.whoami()
+            let list = try await api.courses()
+            me = who
+            courses = Palette.withDistinctHues(list)
             let ids = currentCourses.map(\.id)
-            work = dedupe((try? await api.workItems(courseIds: ids)) ?? [])
+            let items = (try? await api.workItems(courseIds: ids)) ?? []
+            work = dedupeWork(items)
         } catch let e as APIError {
-            if case .signedOut = e { loadError = "signed_out" } else { loadError = message(e) }
-        } catch { loadError = error.localizedDescription }
+            loadError = e.isSignedOut ? "signed_out" : describe(e)
+        } catch {
+            loadError = error.localizedDescription
+        }
         loading = false
     }
 
-    private func assignColors(_ cs: [Course]) -> [Course] { cs }   // hue is computed per course
-    private func dedupe(_ items: [WorkItem]) -> [WorkItem] {
-        var seen = Set<String>(); var out: [WorkItem] = []
-        for w in items {
-            let k = "\(w.courseId):\(w.kind.rawValue):\(w.title):\(w.due?.timeIntervalSince1970 ?? 0)"
-            if seen.insert(k).inserted { out.append(w) }
-        }
-        return out
-    }
-
     // MARK: derived
-    var hiddenCourses: Set<Int> {
-        get { Set(hiddenCoursesRaw.split(separator: ",").compactMap { Int($0) }) }
-        set { hiddenCoursesRaw = newValue.map(String.init).joined(separator: ",") }
-    }
     var visibleCourses: [Course] { courses.filter { !hiddenCourses.contains($0.id) } }
     var currentCourses: [Course] { visibleCourses.filter(\.isCurrent) }
     func course(_ id: Int) -> Course? { courses.first { $0.id == id } }
@@ -95,26 +102,26 @@ final class AppStore: ObservableObject {
 
     func status(_ item: WorkItem) -> WorkStatus { item.status(doneOverride: doneOverrides[item.id]) }
     func toggleDone(_ item: WorkItem) {
-        let now = status(item) != .done
-        if now == item.completed { doneOverrides[item.id] = nil } else { doneOverrides[item.id] = now }
-        UserDefaults.standard.set(doneOverrides, forKey: Self.doneKey)
-        objectWillChange.send()
+        let nowDone = status(item) != .done
+        if nowDone == item.completed { doneOverrides[item.id] = nil } else { doneOverrides[item.id] = nowDone }
+        defaults.set(doneOverrides, forKey: Keys.done)
     }
 
     var themeMode: ThemeMode { ThemeMode(rawValue: themeModeRaw) ?? .system }
     func preferredColorScheme() -> ColorScheme? {
-        switch themeMode { case .light: return .light; case .dark: return .dark; case .system: return nil }
-    }
-
-    private func message(_ e: APIError) -> String {
-        switch e {
-        case .signedOut: return "signed_out"
-        case .http(let c): return "Brightspace returned \(c)."
-        case .network(let m): return m
-        case .badURL: return "Bad address."
+        switch themeMode {
+        case .light: return .light
+        case .dark: return .dark
+        case .system: return nil
         }
     }
 
-    private static let connKey = "lumen.connection"
-    private static let doneKey = "lumen.done"
+    private func describe(_ e: APIError) -> String {
+        switch e {
+        case .signedOut: return "signed_out"
+        case .http(let code): return "The school’s site returned \(code)."
+        case .network(let message): return message
+        case .badURL: return "That address doesn’t look right."
+        }
+    }
 }
