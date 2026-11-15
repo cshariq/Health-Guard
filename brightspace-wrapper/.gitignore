@@ -1,0 +1,12 @@
+# Synced copies of the web UI for the native apps (regenerate with native/sync-assets.sh)
+native/ios/Lumen/WebAssets/
+native/windows/Lumen/WebAssets/
+native/android/app/src/main/assets/lumen/
+
+# Build output
+node_modules/
+native/android/.gradle/
+native/android/build/
+native/android/app/build/
+native/windows/**/bin/
+native/windows/**/obj/

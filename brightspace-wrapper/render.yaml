@@ -1,0 +1,27 @@
+# Render Blueprint for the Lumen website (OAuth server + static UI).
+# In Render: New → Blueprint → point at this repo. If the repo root isn't
+# brightspace-wrapper, set the service Root Directory to brightspace-wrapper.
+services:
+  - type: web
+    name: lumen-brightspace
+    runtime: node
+    rootDir: brightspace-wrapper
+    plan: free
+    buildCommand: ""            # no dependencies to install
+    startCommand: node web/server.mjs
+    healthCheckPath: /healthz
+    autoDeploy: true
+    envVars:
+      - key: NODE_VERSION
+        value: "20"
+      - key: PUBLIC_URL
+        sync: false             # set to your Render URL, e.g. https://lumen-brightspace.onrender.com
+      # Optional — only to enable "Sign in with Brightspace" (set per school once IT registers Lumen):
+      - key: CARLETON_CLIENT_ID
+        sync: false
+      - key: CARLETON_CLIENT_SECRET
+        sync: false
+      - key: UWATERLOO_CLIENT_ID
+        sync: false
+      - key: UWATERLOO_CLIENT_SECRET
+        sync: false

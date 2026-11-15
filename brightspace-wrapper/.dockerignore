@@ -1,0 +1,4 @@
+node_modules
+native/*/WebAssets
+native/android/app/src/main/assets/lumen
+.git

@@ -2,12 +2,17 @@
  * Lumen website: the same Lumen app as the extension, hosted on its own domain.
  *
  * A normal website can't read another site's logged-in data, so the website
- * connects to Brightspace in one of three ways:
- *   1. extension: the Lumen extension makes the API calls with your Brightspace
- *      login (src/bridge.js). Works for any student, today.
- *   2. oauth: official "Sign in with Brightspace" (OAuth 2.0) through web/server.mjs.
- *      Needs the school to register Lumen as an app in Brightspace.
- *   3. demo: sample data, no account needed.
+ * connects to Brightspace in one of these ways:
+ *   1. native:    running inside a Lumen app (native/*), the app reads the session
+ *                 cookie from its own WebView and fetches for us (native-bridge.js).
+ *   2. extension: the Lumen extension makes the API calls with your Brightspace
+ *                 login (src/bridge.js). Works for any student, today.
+ *   3. oauth:     official "Sign in with Brightspace" (OAuth 2.0) through web/server.mjs.
+ *                 Needs the school to register Lumen as an app in Brightspace.
+ *   4. demo:      sample data, no account needed.
+ *
+ * In every real mode the student signs in on the official Brightspace page; Lumen
+ * only ever makes read-only GET calls to the Valence API.
  */
 (function () {
   const L = window.Lumen;
@@ -70,6 +75,39 @@
     return fetch('/bs' + u.pathname + u.search, { credentials: 'same-origin', headers: { Accept: 'application/json' } });
   };
 
+  // Native app mode: the app reads the session cookie from its own WebView and fetches for us.
+  function nativeFetch() {
+    return async (url) => {
+      const r = await L.native.get(url);
+      return responseLike(r.status, r.contentType, r.body);
+    };
+  }
+
+  // Open the official Brightspace login and wait until the session works.
+  // In a native app the app presents it; on the web we open a tab and poll whoami.
+  async function ensureSignedIn(host, onState) {
+    const check = () => L.createApi({ base: host, fetch: L.native && L.native.available ? nativeFetch() : extensionFetch() }).whoami();
+    try { await check(); return true; } catch (e) { if (e.status !== 401 && e.status !== 403) throw e; }
+
+    if (L.native && L.native.available) {
+      onState(h('div.notice', icon('login'), 'Sign in on the Brightspace page…'));
+      await L.native.login(host);
+      await check();
+      return true;
+    }
+
+    const loginUrl = `${host}/d2l/login`;
+    const win = window.open(loginUrl, 'lumen-brightspace-login');
+    onState(h('div.notice', icon('schedule'),
+      h('span', 'Sign in to Brightspace in the tab that just opened. Lumen will continue automatically. ',
+        h('a', { href: loginUrl, target: '_blank', rel: 'noopener' }, 'Reopen sign-in'))));
+    for (let i = 0; i < 150; i++) { // ~5 minutes
+      await new Promise((res) => setTimeout(res, 2000));
+      try { await check(); try { win && win.close(); } catch { /* ignore */ } return true; } catch { /* keep waiting */ }
+    }
+    throw new Error('Didn’t detect a Brightspace sign-in. Sign in, then press Connect again.');
+  }
+
   /* ---------------- start the app ---------------- */
   function startApp(c) {
     const school = serverSchools.find((s) => s.id === c.school) || SCHOOLS.find((s) => s.id === c.school) || { name: c.host, host: c.host };
@@ -82,6 +120,10 @@
       api = L.createApi({ base: school.host, fetch: proxyFetch(), imageBase: '/bs' });
       note = `Signed in to ${school.name} with Brightspace. Lumen only has read access.`;
       L.loginUrl = `/auth/login?school=${encodeURIComponent(c.school)}`;
+    } else if (c.mode === 'native') {
+      api = L.createApi({ base: school.host, fetch: nativeFetch(), imageBase: null });
+      note = `Signed in to ${school.name} with Brightspace inside the Lumen app, using your own login. Nothing leaves your device.`;
+      L.loginUrl = '#/';
     } else {
       api = L.createApi({ base: school.host, fetch: extensionFetch(), imageBase: null });
       note = `Connected to ${school.name} through the Lumen extension, using your Brightspace login. Nothing is stored on any server.`;
@@ -144,15 +186,20 @@
 
     const drawMethods = () => {
       const canOauth = selected !== 'other' && oauthSchools.has(selected);
+      const isNative = L.native && L.native.available;
       methods.replaceChildren(...[
-        h('div.method.recommended',
-          h('div.method-head', h('span.method-icon', icon('swap_horiz')), h('div', h('div.method-title', 'Connect with the Lumen extension'), h('div.method-sub', 'Uses your existing Brightspace login. Works for every student today.'))),
-          ext
-            ? h('div.method-state.ok', icon('check_circle', { fill: true }), `Extension found (v${ext.version})`)
-            : h('div.method-state', icon('info'), 'Install the Lumen extension in Chrome, Edge or Brave, then reload this page.'),
-          h('div.method-actions',
-            ext ? h('button.filled-btn', { type: 'button', onclick: connectExtension }, 'Connect') : h('button.outlined-btn', { type: 'button', onclick: showInstall }, icon('download'), 'How to install'),
-            ext ? null : h('button.text-btn', { type: 'button', onclick: () => location.reload() }, icon('refresh'), 'I’ve installed it'))),
+        isNative
+          ? h('div.method.recommended',
+            h('div.method-head', h('span.method-icon', icon('login')), h('div', h('div.method-title', 'Sign in with Brightspace'), h('div.method-sub', 'Sign in on the official Brightspace page. The app keeps your login on this device.'))),
+            h('div.method-actions', h('button.filled-btn', { type: 'button', onclick: connectNative }, 'Sign in')))
+          : h('div.method.recommended',
+            h('div.method-head', h('span.method-icon', icon('swap_horiz')), h('div', h('div.method-title', 'Connect with the Lumen extension'), h('div.method-sub', 'Uses your existing Brightspace login. Works for every student today.'))),
+            ext
+              ? h('div.method-state.ok', icon('check_circle', { fill: true }), `Extension found (v${ext.version})`)
+              : h('div.method-state', icon('info'), 'Install the Lumen extension in Chrome, Edge or Brave, then reload this page.'),
+            h('div.method-actions',
+              ext ? h('button.filled-btn', { type: 'button', onclick: connectExtension }, 'Connect') : h('button.outlined-btn', { type: 'button', onclick: showInstall }, icon('download'), 'How to install'),
+              ext ? null : h('button.text-btn', { type: 'button', onclick: () => location.reload() }, icon('refresh'), 'I’ve installed it'))),
         h(`div.method${canOauth ? '' : '.disabled'}`,
           h('div.method-head', h('span.method-icon', icon('login')), h('div', h('div.method-title', 'Sign in with Brightspace'), h('div.method-sub', 'Official OAuth sign-in. No extension needed.'))),
           canOauth ? null : h('div.method-state', icon('info'), 'Not enabled for this school yet. It needs the school’s IT team to register Lumen in Brightspace.'),
@@ -178,6 +225,20 @@
       });
     }
 
+    async function connectNative() {
+      const host = schoolHost();
+      if (!host) { status.replaceChildren(h('div.notice.error', icon('error'), 'Enter your school’s Brightspace address.')); return; }
+      const c = { mode: 'native', school: selected === 'other' ? null : selected, host };
+      status.replaceChildren(h('div.notice', icon('schedule'), 'Opening Brightspace sign-in…'));
+      try {
+        await ensureSignedIn(host, (node) => status.replaceChildren(node));
+        conn.set(c);
+        startApp(c);
+      } catch (e) {
+        status.replaceChildren(h('div.notice.error', icon('error'), e.message));
+      }
+    }
+
     async function connectExtension() {
       const host = schoolHost();
       if (!host) { status.replaceChildren(h('div.notice.error', icon('error'), 'Enter your school’s Brightspace address.')); return; }
@@ -195,17 +256,8 @@
             if (i === 119) throw new Error('Approval timed out. Press Connect to try again.');
           }
         }
-        // Check the Brightspace login before switching screens.
-        try {
-          await L.createApi({ base: host, fetch: extensionFetch() }).whoami();
-        } catch (e) {
-          if (e.status === 401 || e.status === 403) {
-            status.replaceChildren(h('div.notice.error', icon('lock'), h('span', 'You’re not signed in to Brightspace. ',
-              h('a', { href: `${host}/d2l/login`, target: '_blank', rel: 'noopener' }, 'Sign in in a new tab'), ', then press Connect again.')));
-            return;
-          }
-          throw new Error(`Couldn’t reach Brightspace at ${host}: ${e.message}`);
-        }
+        // Seamless: if not signed in, open the official Brightspace login and wait.
+        await ensureSignedIn(host, (node) => status.replaceChildren(node));
         conn.set(c);
         startApp(c);
       } catch (e) {

@@ -1,0 +1,32 @@
+# Publishes the static Lumen site (extension + demo modes) to GitHub Pages.
+# Live URL after it runs: https://<owner>.github.io/<repo>/brightspace-wrapper/web/
+# "Sign in with Brightspace" (OAuth) needs the Node server instead — see brightspace-wrapper/render.yaml.
+name: Deploy Lumen to Pages
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ["brightspace-wrapper/**"]
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+concurrency:
+  group: pages
+  cancel-in-progress: true
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/configure-pages@v5
+        with:
+          enablement: true
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: brightspace-wrapper
+      - id: deployment
+        uses: actions/deploy-pages@v4
