@@ -10,3 +10,6 @@ native/ios/**/xcuserdata/
 local.properties
 *.apk
 *.aab
+
+# Lumen Classes data (SQLite database + uploaded files)
+classes/data/

@@ -3,6 +3,8 @@
   const L = (window.Lumen = window.Lumen || {});
   const { h, icon, iconButton } = L;
   const V = (L.views = {});
+  // L.ext (optional) lets a host add to these views — Lumen Classes uses it for authoring and
+  // hand-ins. It is undefined in the extension and on the Brightspace website, where every hook is a no-op.
   const ui = { expanded: new Map(), classworkQuery: '', todoCourse: 'all' };
 
   const dark = () => L.isDark(L.settings.get().mode);
@@ -77,7 +79,8 @@
       h('div.hero-chips',
         h('a.assist-chip', { href: '#/todo' }, icon('checklist'), 'To-do'),
         missing.length ? h('a.assist-chip.error', { href: '#/todo/missing' }, icon('error'), `${missing.length} missing`) : null,
-        h('a.assist-chip', { href: '#/calendar' }, icon('calendar_month'), 'This week'))));
+        h('a.assist-chip', { href: '#/calendar' }, icon('calendar_month'), 'This week'),
+        L.ext?.homeChips?.(ctx))));
 
     // Due soon strip
     if (store.work == null) {
@@ -124,7 +127,7 @@
       h('div.chip-row', chip('current', 'Current'), termList.map((t) => chip(t, t)), chip('all', 'All'))));
 
     if (!shown.length) {
-      page.append(L.empty('school', filter === 'current' ? 'No current classes' : 'No classes here', filter === 'current' ? 'Try “All” to see past and upcoming terms.' : null));
+      page.append(L.ext?.homeEmpty?.(ctx, filter) || L.empty('school', filter === 'current' ? 'No current classes' : 'No classes here', filter === 'current' ? 'Try “All” to see past and upcoming terms.' : null));
       return page;
     }
     page.append(h(`div.${s.courseView === 'list' ? 'course-list' : 'course-grid'}`, shown.map((c) => courseCard(ctx, c))));
@@ -211,12 +214,13 @@
   };
 
   /* ======================= Class ======================= */
-  V.course = function (ctx, { id, tab }) {
+  V.course = function (ctx, { id, tab, rest }) {
     const { store, api } = ctx;
     const c = store.course(id) || (store.courses ? null : { id, name: 'Loading…', code: '' });
     if (!c) return h('div.page', L.empty('school', 'Class not found', 'You may no longer be enrolled in this class.'));
     const tabs = [['stream', 'Stream'], ['classwork', 'Classwork'], ['work', 'Work'], ['grades', 'Grades']];
-    if (!tabs.some(([k]) => k === tab)) tab = 'stream';
+    if (L.ext?.extraTabs) tabs.push(...L.ext.extraTabs(ctx, c));
+    if (!tabs.some(([k]) => k === tab) && !(L.ext?.routes || []).includes(tab)) tab = 'stream';
     const base = api.base;
 
     const page = h('div.page.course-page', { style: courseColorVars(c) },
@@ -226,19 +230,21 @@
         h('div.course-banner-text',
           h('h1.course-title', c.name),
           h('div.course-sub', [c.code, c.start ? L.termOf(c).label : ''].filter(Boolean).join(' · '))),
-        h('div.course-links',
+        h('div.course-links', L.ext?.bannerChips ? L.ext.bannerChips(ctx, c) : [
           h('a.banner-chip', { href: `${base}/d2l/le/${c.id}/discussions/List`, ...target() }, icon('forum'), 'Discussions'),
           h('a.banner-chip', { href: `${base}/d2l/lms/classlist/classlist.d2l?ou=${c.id}`, ...target() }, icon('groups'), 'Classlist'),
-          h('a.banner-chip', { href: `${base}/d2l/home/${c.id}?lumen=off` }, icon('open_in_new'), 'Classic view'))),
+          h('a.banner-chip', { href: `${base}/d2l/home/${c.id}?lumen=off` }, icon('open_in_new'), 'Classic view')])),
       h('nav.tabs', { role: 'tablist' }, tabs.map(([k, label]) =>
         h(`a.tab${k === tab ? '.active' : ''}`, { href: `#/c/${c.id}/${k}`, role: 'tab', 'aria-selected': String(k === tab) }, label))));
 
     const body = h('div.tab-body');
     page.append(body);
-    if (tab === 'stream') body.append(streamTab(ctx, c));
-    if (tab === 'classwork') body.append(classworkTab(ctx, c));
-    if (tab === 'work') body.append(workTab(ctx, c));
-    if (tab === 'grades') body.append(gradesTab(ctx, c));
+    const custom = L.ext?.courseTab?.(ctx, c, tab, rest || []);   // a host can take over a tab or add routes
+    if (custom) body.append(custom);
+    else if (tab === 'stream') body.append(streamTab(ctx, c));
+    else if (tab === 'classwork') body.append(...[L.ext?.classworkTop?.(ctx, c), classworkTab(ctx, c)].filter(Boolean));
+    else if (tab === 'work') body.append(workTab(ctx, c));
+    else if (tab === 'grades') body.append(gradesTab(ctx, c));
     return page;
   };
 
@@ -259,8 +265,9 @@
         h('div.side-title', 'Jump to'),
         h('a.side-link', { href: `#/c/${c.id}/classwork` }, icon('auto_stories'), 'Course content'),
         h('a.side-link', { href: `#/c/${c.id}/grades` }, icon('grading'), 'My grades'),
-        h('a.side-link', { href: `${api.base}/d2l/lms/dropbox/user/folders_list.d2l?ou=${c.id}`, ...target() }, icon('assignment'), 'Assignment dropbox'),
-        h('a.side-link', { href: `${api.base}/d2l/lms/quizzing/user/quizzes_list.d2l?ou=${c.id}`, ...target() }, icon('quiz'), 'Quizzes')));
+        L.ext ? h('a.side-link', { href: `#/c/${c.id}/work` }, icon('assignment'), 'Assignments and quizzes') : [
+          h('a.side-link', { href: `${api.base}/d2l/lms/dropbox/user/folders_list.d2l?ou=${c.id}`, ...target() }, icon('assignment'), 'Assignment dropbox'),
+          h('a.side-link', { href: `${api.base}/d2l/lms/quizzing/user/quizzes_list.d2l?ou=${c.id}`, ...target() }, icon('quiz'), 'Quizzes')]));
 
     const feed = loadInto(() => api.news(c.id), (news) => {
       if (!news.length) return L.empty('campaign', 'No announcements yet', 'This is where your instructor’s announcements will appear.');
@@ -269,7 +276,8 @@
         const card = h('article.post',
           h('header.post-head',
             h('span.post-avatar', icon('campaign', { fill: true })),
-            h('div', h('div.post-title', n.title), h('div.post-date', n.date ? `${L.fmtDay(n.date)} · ${L.relative(n.date)}` : ''))),
+            h('div', h('div.post-title', n.title), h('div.post-date', n.date ? `${L.fmtDay(n.date)} · ${L.relative(n.date)}` : '')),
+            L.ext?.postActions?.(ctx, c, n)),
           bodyEl,
           n.attachments.length ? h('div.attach-row', n.attachments.map((a) => h('a.attach-chip', { href: a.url, target: '_blank', rel: 'noopener' }, icon('attach_file'), a.name))) : null);
         requestAnimationFrame(() => {
@@ -283,7 +291,7 @@
       }));
     }, h('div.feed', L.skeleton(3, 'post')));
 
-    return h('div.stream', aside, h('div.stream-main', feed));
+    return h('div.stream', aside, h('div.stream-main', L.ext?.streamTop?.(ctx, c), feed));
   }
 
   function classworkTab(ctx, c) {

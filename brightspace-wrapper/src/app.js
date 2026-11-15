@@ -84,7 +84,7 @@
       h('div.top-spacer'),
       searchBox,
       h('div.top-actions',
-        iconButton('refresh', 'Refresh from Brightspace', async () => { L.toast('Refreshing…'); await store.load(true); render(); }),
+        iconButton('refresh', opts.standalone ? 'Refresh' : 'Refresh from Brightspace', async () => { L.toast('Refreshing…'); await store.load(true); render(); }),
         themeBtn,
         iconButton('settings', 'Settings', () => L.openSettings(ctx)),
         avatar));
@@ -130,7 +130,7 @@
         courses.length === 0 && store.courses ? h('div.nav-hint', 'No current classes') : null,
         h('div.nav-divider'),
         navItem('#/archived', 'inbox', 'Past & hidden classes', r === 'archived'),
-        opts.web
+        opts.standalone ? null : opts.web
           ? h('a.nav-item', { href: `${api.base}/d2l/home`, target: '_blank', rel: 'noopener', title: 'Open Brightspace' }, h('span.nav-icon', icon('open_in_new')), h('span.nav-label', 'Open Brightspace'))
           : h('a.nav-item', { href: `${api.base}/d2l/home?lumen=off`, title: 'Classic Brightspace' }, h('span.nav-icon', icon('swap_horiz')), h('span.nav-label', 'Classic Brightspace')),
       ].flat().filter(Boolean));
@@ -144,7 +144,7 @@
           me && h('p.muted', me.UniqueName || ''),
           h('p', opts.connectionNote || 'Lumen reads your classes straight from Brightspace using the session you are already signed into. Nothing is sent anywhere else.'),
           opts.onDisconnect
-            ? h('button.tonal-btn', { type: 'button', onclick: opts.onDisconnect }, icon('swap_horiz'), 'Disconnect / switch school')
+            ? h('button.tonal-btn', { type: 'button', onclick: opts.onDisconnect }, icon(opts.disconnectIcon || 'swap_horiz'), opts.disconnectLabel || 'Disconnect / switch school')
             : h('a.text-btn', { href: `${api.base}/d2l/logout` }, icon('login'), 'Sign out of Brightspace')),
         actions: [{ label: 'Close' }],
       });
@@ -185,7 +185,7 @@
     function parse() {
       const hash = location.hash.replace(/^#/, '') || '/';
       const parts = hash.split('/').filter(Boolean);
-      if (parts[0] === 'c' && parts[1]) return { name: 'course', params: { id: parts[1], tab: parts[2] || 'stream' } };
+      if (parts[0] === 'c' && parts[1]) return { name: 'course', params: { id: parts[1], tab: parts[2] || 'stream', rest: parts.slice(3) } };
       if (['todo', 'calendar', 'grades', 'archived'].includes(parts[0])) return { name: parts[0], params: { tab: parts[1], offset: parts[1] } };
       return { name: 'home', params: {} };
     }

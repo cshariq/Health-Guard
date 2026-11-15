@@ -13,7 +13,11 @@ interface inspired by **Material You** and **Google Classroom**. Works with:
 |---|---|---|
 | ![](docs/class-stream.png) | ![](docs/classwork.png) | ![](docs/todo.png) |
 
-**Three ways to use it:**
+**New: Lumen Classes** (`classes/`) is a self-hosted replacement for Brightspace itself: teachers create classes,
+post announcements and materials, assign work and quizzes, and grade; students join with a code, hand in work and
+see their grades. See [classes/README.md](classes/README.md).
+
+**Three ways to use Lumen with an existing Brightspace:**
 - **Browser extension.** Lumen replaces the Brightspace homepage itself. Install steps are below.
 - **Website** (`web/`). Lumen on its own address: connect through the extension, sign in with Brightspace (OAuth),
   or try the demo. See [web/README.md](web/README.md).

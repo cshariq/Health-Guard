@@ -1,0 +1,113 @@
+/* Lumen Classes — forms, authoring and grading. Built on the tokens in src/app.css. */
+
+/* ---------- forms ---------- */
+.lumen-app .form { display: flex; flex-direction: column; gap: 14px; }
+.lumen-app .form-field { display: flex; flex-direction: column; gap: 6px; flex: 1; min-width: 0; }
+.lumen-app .form-label { font-size: 13px; font-weight: 500; color: var(--md-on-surface); }
+.lumen-app .form-hint { font-size: 12px; line-height: 16px; color: var(--md-on-surface-variant); font-weight: 400; }
+.lumen-app .form-input {
+  width: 100%; min-height: 44px; padding: 10px 14px; border-radius: var(--radius-m); border: 1px solid var(--md-outline);
+  background: var(--md-surface-container-lowest); color: var(--md-on-surface); font: inherit; font-size: 15px;
+}
+.lumen-app textarea.form-input { resize: vertical; line-height: 1.5; }
+.lumen-app .form-input:focus { outline: 2px solid var(--md-primary); outline-offset: -1px; border-color: var(--md-primary); }
+.lumen-app .form-input.narrow { width: 96px; flex: none; }
+.lumen-app .form-row { display: flex; gap: 12px; align-items: flex-start; }
+.lumen-app .form-row > .form-field:has(.narrow) { flex: none; }
+.lumen-app .form-error { color: var(--md-error); font-weight: 500; min-height: 0; }
+.lumen-app .form-error:empty { display: none; }
+.lumen-app .form-actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 8px; }
+.lumen-app .form-actions.start { justify-content: flex-start; margin-top: 24px; }
+.lumen-app .form-actions.center { justify-content: center; margin-top: 12px; }
+.lumen-app .wide { width: 100%; }
+.lumen-app .dialog { width: min(560px, 100%); }
+.lumen-app button:disabled { opacity: .5; cursor: default; }
+@media (max-width: 599px) { .lumen-app .form-row { flex-direction: column; } .lumen-app .form-input.narrow { width: 100%; } }
+
+/* ---------- sign in ---------- */
+.lumen-app.auth-page { min-height: 100vh; }
+.lumen-app .auth { max-width: 1040px; margin: 0 auto; padding: 56px 24px; display: grid; gap: 48px; grid-template-columns: minmax(0, 1fr) minmax(0, 420px); align-items: center; min-height: 100vh; }
+.lumen-app .brand-lg { display: flex; align-items: center; gap: 12px; font-family: var(--font-display); font-size: 26px; }
+.lumen-app .brand-lg .brand-mark { width: 44px; height: 44px; border-radius: 14px; }
+.lumen-app .auth-headline { margin-top: 32px; font-family: var(--font-display); font-size: clamp(34px, 5vw, 52px); line-height: 1.1; letter-spacing: -.5px; }
+.lumen-app .auth-lede { margin-top: 16px; max-width: 480px; font-size: 18px; line-height: 28px; color: var(--md-on-surface-variant); }
+.lumen-app .auth-points { list-style: none; padding: 0; margin: 28px 0 0; display: grid; gap: 12px; }
+.lumen-app .auth-points li { display: flex; align-items: center; gap: 12px; font-size: 15px; }
+.lumen-app .auth-points .icon { color: var(--md-primary); background: var(--md-primary-container); border-radius: 50%; padding: 6px; --icon-size: 32px; }
+.lumen-app .auth-card { padding: 28px; border-radius: var(--radius-xl); background: var(--md-surface-container-low); border: 1px solid var(--md-outline-variant); display: flex; flex-direction: column; gap: 16px; }
+.lumen-app .auth-title { font-family: var(--font-display); font-size: 24px; line-height: 32px; }
+@media (max-width: 859px) { .lumen-app .auth { grid-template-columns: 1fr; gap: 28px; padding-top: 28px; align-items: start; } .lumen-app .auth-points { display: none; } .lumen-app .auth-headline { margin-top: 20px; } }
+
+/* ---------- home ---------- */
+.lumen-app button.assist-chip { cursor: pointer; }
+.lumen-app button.banner-chip { color: #fff; cursor: pointer; }
+
+/* ---------- stream ---------- */
+.lumen-app .composer { margin-bottom: 16px; padding: 12px 16px; border-radius: var(--radius-l); background: var(--md-surface-container-lowest); border: 1px solid var(--md-outline-variant); box-shadow: var(--elev-1); }
+.lumen-app .composer-open { width: 100%; display: flex; align-items: center; gap: 14px; min-height: 48px; text-align: left; color: var(--md-on-surface-variant); font-size: 15px; }
+.lumen-app .post-head > div { flex: 1; min-width: 0; }
+.lumen-app .post-delete { opacity: .6; }
+.lumen-app .post-delete:hover { opacity: 1; }
+
+/* ---------- classwork authoring ---------- */
+.lumen-app .toolbar.author { padding-bottom: 16px; margin-bottom: 16px; border-bottom: 1px solid var(--md-outline-variant); }
+.lumen-app .manage { display: flex; flex-direction: column; gap: 2px; max-height: 60vh; overflow: auto; }
+.lumen-app .manage-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 6px 0; }
+.lumen-app .manage-title { font-weight: 500; color: var(--md-on-surface); }
+.lumen-app .manage-indent { padding-left: 20px; }
+.lumen-app .quiz-builder { display: flex; flex-direction: column; gap: 12px; }
+.lumen-app .quiz-q { padding: 14px; border-radius: var(--radius-m); background: var(--md-surface-container-lowest); border: 1px solid var(--md-outline-variant); display: flex; flex-direction: column; gap: 10px; }
+.lumen-app .quiz-choices { display: grid; gap: 8px; }
+.lumen-app .quiz-choice { display: flex; align-items: center; gap: 10px; }
+.lumen-app .quiz-choice input[type="radio"], .lumen-app .quiz-option input[type="radio"] { width: 20px; height: 20px; flex: none; accent-color: var(--md-primary); }
+
+/* ---------- item pages ---------- */
+.lumen-app .detail { display: flex; flex-direction: column; gap: 16px; max-width: 860px; }
+.lumen-app .back { align-self: flex-start; margin-left: -12px; }
+.lumen-app .detail-title { font-family: var(--font-display); font-size: 22px; line-height: 28px; }
+.lumen-app .side-card.result { background: var(--md-primary-container); color: var(--md-on-primary-container); border-color: transparent; gap: 8px; }
+.lumen-app .grade-big { font-family: var(--font-display); font-size: 36px; line-height: 44px; }
+.lumen-app .prose.answer { white-space: pre-wrap; }
+.lumen-app .side-card .attach-chip { align-self: flex-start; }
+.lumen-app .notice { display: flex; align-items: flex-start; gap: 10px; padding: 12px 14px; margin-bottom: 12px; border-radius: var(--radius-m); background: var(--md-success-container); color: var(--md-on-success-container); }
+.lumen-app .notice .icon { --icon-size: 20px; flex: none; }
+
+/* grading */
+.lumen-app .grade-entry { display: flex; flex-direction: column; gap: 10px; padding: 14px 16px; }
+.lumen-app .grade-entry-head { display: flex; align-items: center; gap: 14px; }
+.lumen-app .answer-box { padding: 12px 14px; border-radius: var(--radius-m); background: var(--md-surface-container); display: flex; flex-direction: column; gap: 8px; align-items: flex-start; }
+.lumen-app .grade-entry-form { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.lumen-app .grade-entry-form .form-input:not(.narrow) { flex: 1 1 220px; width: auto; }
+.lumen-app .list-row .score { padding-right: 12px; }
+
+/* quiz */
+.lumen-app .quiz-list { display: flex; flex-direction: column; gap: 12px; }
+.lumen-app .quiz-card { margin: 0; padding: 16px 18px; border-radius: var(--radius-l); border: 1px solid var(--md-outline-variant); background: var(--md-surface-container-lowest); display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.lumen-app .quiz-prompt { padding: 0; font-weight: 500; font-size: 16px; line-height: 24px; margin-bottom: 6px; }
+.lumen-app .quiz-option { display: flex; align-items: center; gap: 12px; min-height: 44px; padding: 6px 12px; border-radius: var(--radius-m); }
+.lumen-app .quiz-option.pick { cursor: pointer; }
+.lumen-app .quiz-option.pick:hover { background: var(--md-surface-container); }
+.lumen-app .quiz-option .icon { --icon-size: 20px; color: var(--md-on-surface-variant); }
+.lumen-app .quiz-option.correct { background: var(--md-success-container); color: var(--md-on-success-container); }
+.lumen-app .quiz-option.correct .icon { color: inherit; }
+.lumen-app .quiz-option.wrong { background: var(--md-error-container); color: var(--md-on-error-container); }
+.lumen-app .quiz-option.wrong .icon { color: inherit; }
+
+/* gradebook */
+.lumen-app .gradebook-wrap { overflow-x: auto; border: 1px solid var(--md-outline-variant); border-radius: var(--radius-l); background: var(--md-surface-container-lowest); }
+.lumen-app .gradebook { border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nums; }
+.lumen-app .gradebook th, .lumen-app .gradebook td { padding: 12px 16px; text-align: center; border-bottom: 1px solid var(--md-outline-variant); white-space: nowrap; }
+.lumen-app .gradebook thead th { font-weight: 500; vertical-align: bottom; max-width: 180px; white-space: normal; }
+.lumen-app .gradebook thead a { color: var(--md-primary); }
+.lumen-app .gradebook .sticky { position: sticky; left: 0; text-align: left; background: var(--md-surface-container-low); font-weight: 500; }
+.lumen-app .gradebook tbody tr:last-child > * { border-bottom: 0; }
+.lumen-app .gradebook td.none { color: var(--md-outline); }
+.lumen-app .gradebook td.pending { color: var(--md-warning); font-weight: 500; }
+.lumen-app .gradebook td.overall { font-weight: 600; }
+
+/* people */
+.lumen-app .people { max-width: 760px; }
+.lumen-app .code-card { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; padding: 20px 24px; margin-bottom: 24px; border-radius: var(--radius-xl); background: var(--md-primary-container); color: var(--md-on-primary-container); }
+.lumen-app .code-card .form-hint { color: inherit; opacity: .8; }
+.lumen-app .code-value { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size: 30px; letter-spacing: 2px; font-weight: 600; user-select: all; }
+.lumen-app .people .group-title { margin-top: 20px; }

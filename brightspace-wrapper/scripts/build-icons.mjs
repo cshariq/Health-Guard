@@ -12,7 +12,8 @@ const names = [
   'attach_file','check_circle','schedule','error','event','slideshow','palette','more_vert','download',
   'inbox','visibility_off','visibility','filter_list','done_all','notifications','article','folder_open',
   'history','unfold_more','unfold_less','swap_horiz','login','task_alt','radio_button_unchecked','lock',
-  'table_chart','image','auto_stories','today','info','wifi_off','tune','view_agenda','grid_view','videocam'
+  'table_chart','image','auto_stories','today','info','wifi_off','tune','view_agenda','grid_view','videocam',
+  'add','delete','content_copy','upload_file','person','send','logout','edit','archive'
 ];
 const out = {};
 for (const n of names) {
