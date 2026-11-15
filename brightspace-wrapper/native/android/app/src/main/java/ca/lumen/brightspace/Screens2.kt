@@ -6,12 +6,14 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.background
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.*
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -35,7 +37,7 @@ fun CourseScreen(vm: AppViewModel, courseId: Int, onBack: () -> Unit) {
     var tab by remember { mutableStateOf(0) }
     Scaffold(topBar = {
         TopAppBar(title = { Text(c?.code ?: "Class") },
-            navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, "Back") } })
+            navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back") } })
     }) { pad ->
         Column(Modifier.padding(pad).fillMaxSize()) {
             if (c != null) {
@@ -154,7 +156,7 @@ fun TopicRow(t: Topic) {
 @Composable
 fun WorkTab(vm: AppViewModel, courseId: Int) {
     val items = vm.workFor(courseId)
-    if (items.isEmpty()) { EmptyState(Icons.Default.Assignment, "No assignments or quizzes"); return }
+    if (items.isEmpty()) { EmptyState(Icons.AutoMirrored.Filled.Assignment, "No assignments or quizzes"); return }
     val groups = items.groupBy { vm.status(it) }
     LazyColumn(contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(20.dp)) {
         listOf(WorkStatus.MISSING to "Missing", WorkStatus.ASSIGNED to "Upcoming", WorkStatus.DONE to "Done").forEach { (st, title) ->
@@ -176,7 +178,7 @@ fun GradesTab(vm: AppViewModel, courseId: Int) {
     when {
         error != null -> LoadError(error!!) {}
         grades == null -> LoadingBox()
-        grades!!.items.isEmpty() && grades!!.finalDisplay == null -> EmptyState(Icons.Default.Grading, "No grades released yet")
+        grades!!.items.isEmpty() && grades!!.finalDisplay == null -> EmptyState(Icons.AutoMirrored.Filled.Grading, "No grades released yet")
         else -> LazyColumn(contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
             item {
                 Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(20.dp)).background(Palette.container(hue, dark())).padding(16.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(20.dp)) {
@@ -287,7 +289,7 @@ fun GradesOverviewScreen(vm: AppViewModel, openCourse: (Int) -> Unit) {
     LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         item { Text("Released grades across your current classes.", color = MaterialTheme.colorScheme.onSurfaceVariant) }
         items(vm.currentCourses()) { c -> GradeSummaryCard(vm, c) { openCourse(c.id) } }
-        if (vm.currentCourses().isEmpty()) item { EmptyState(Icons.Default.Grading, "No current classes") }
+        if (vm.currentCourses().isEmpty()) item { EmptyState(Icons.AutoMirrored.Filled.Grading, "No current classes") }
     }
 }
 
@@ -319,7 +321,7 @@ fun SettingsScreen(vm: AppViewModel) {
         Text("Account", style = MaterialTheme.typography.titleMedium)
         vm.me?.let { Text("${it.firstName} ${it.lastName}") }
         Text(vm.schoolName, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        OutlinedButton(onClick = { vm.signOut() }) { Icon(Icons.Default.Logout, null); Spacer(Modifier.width(8.dp)); Text("Disconnect") }
+        OutlinedButton(onClick = { vm.signOut() }) { Icon(Icons.AutoMirrored.Filled.Logout, null); Spacer(Modifier.width(8.dp)); Text("Disconnect") }
         val hidden = vm.courses.filter { vm.isHidden(it.id) }
         if (hidden.isNotEmpty()) {
             HorizontalDivider()

@@ -20,10 +20,14 @@ import java.util.Date
 import java.util.Locale
 import java.util.TimeZone
 
-class BrightspaceApi(host: String) {
+class BrightspaceApi(
+    host: String,
+    private val cookieProvider: (String) -> String? = { CookieManager.getInstance().getCookie(it) },
+) {
     private val host = host.trimEnd('/')
-    private val versions = HashMap<String, String>()
-    private val cache = HashMap<String, Pair<Long, Any>>()
+    // Concurrent: several screens (e.g. the Grades overview) fetch in parallel on IO threads.
+    private val versions = java.util.concurrent.ConcurrentHashMap<String, String>()
+    private val cache = java.util.concurrent.ConcurrentHashMap<String, Pair<Long, Any>>()
 
     fun clearCache() = cache.clear()
 
@@ -35,7 +39,7 @@ class BrightspaceApi(host: String) {
             requestMethod = "GET"
             instanceFollowRedirects = false
             setRequestProperty("Accept", "application/json")
-            CookieManager.getInstance().getCookie(host)?.let { setRequestProperty("Cookie", it) }
+            cookieProvider(host)?.let { setRequestProperty("Cookie", it) }
             connectTimeout = 15000; readTimeout = 20000
         }
         val status = conn.responseCode
@@ -66,7 +70,7 @@ class BrightspaceApi(host: String) {
     // MARK: endpoints
     suspend fun whoami(): Me {
         val d = getJson(lp("/users/whoami")) as JSONObject
-        return Me(d.optString("FirstName"), d.optString("LastName"), d.optString("UniqueName"))
+        return Me(d.s("FirstName"), d.s("LastName"), d.s("UniqueName"))
     }
 
     suspend fun courses(): List<Course> {
@@ -78,7 +82,7 @@ class BrightspaceApi(host: String) {
             val page = getJson(path) as JSONObject
             page.optJSONArray("Items")?.let { for (i in 0 until it.length()) items.add(it.getJSONObject(i)) }
             val pi = page.optJSONObject("PagingInfo")
-            path = if (pi != null && pi.optBoolean("HasMoreItems") && pi.optString("Bookmark").isNotEmpty())
+            path = if (pi != null && pi.optBoolean("HasMoreItems") && pi.s("Bookmark").isNotEmpty())
                 lp("/enrollments/myenrollments/?orgUnitTypeId=3&sortBy=-StartDate&bookmark=" + URLEncoder.encode(pi.getString("Bookmark"), "UTF-8"))
             else null
         }
@@ -88,10 +92,10 @@ class BrightspaceApi(host: String) {
             if (access?.has("CanAccess") == true && !access.optBoolean("CanAccess", true)) return@mapNotNull null
             Course(
                 id = ou.optInt("Id"),
-                name = ou.optString("Name", "Course"),
-                code = ou.optString("Code", ""),
-                start = Dates.parse(access?.optString("StartDate")),
-                end = Dates.parse(access?.optString("EndDate")),
+                name = ou.s("Name", "Course"),
+                code = ou.s("Code", ""),
+                start = Dates.parse(access?.s("StartDate")),
+                end = Dates.parse(access?.s("EndDate")),
                 pinned = e.optJSONObject("PinSettings")?.optBoolean("IsPinned") ?: false,
                 hasImage = ou.has("ImageUrl") && !ou.isNull("ImageUrl"),
             )
@@ -108,11 +112,11 @@ class BrightspaceApi(host: String) {
             n.optJSONArray("Attachments")?.let {
                 for (j in 0 until it.length()) {
                     val a = it.getJSONObject(j)
-                    atts.add(Attachment(a.optString("FileName", "file"), "$host/d2l/le/news/$ou/${n.optInt("Id")}/attachment/${a.opt("FileId")}"))
+                    atts.add(Attachment(a.s("FileName", "file"), "$host/d2l/le/news/$ou/${n.optInt("Id")}/attachment/${a.opt("FileId")}"))
                 }
             }
-            out.add(Announcement(n.optInt("Id"), n.optString("Title"), Rich.html(n.opt("Body")),
-                Dates.parse(n.optString("StartDate")) ?: Dates.parse(n.optString("CreatedDate")), atts))
+            out.add(Announcement(n.optInt("Id"), n.s("Title"), Rich.html(n.opt("Body")),
+                Dates.parse(n.s("StartDate")) ?: Dates.parse(n.s("CreatedDate")), atts))
         }
         return out.sortedByDescending { it.date?.time ?: 0 }
     }
@@ -126,13 +130,13 @@ class BrightspaceApi(host: String) {
             m.optJSONArray("Topics")?.let {
                 for (i in 0 until it.length()) {
                     val t = it.getJSONObject(i); if (t.optBoolean("IsHidden")) continue
-                    tops.add(Topic(t.optInt("TopicId"), t.optString("Title"),
-                        Kind.ofTopic(t.optString("Url"), t.optString("TypeIdentifier")),
+                    tops.add(Topic(t.optInt("TopicId"), t.s("Title"),
+                        Kind.ofTopic(t.s("Url"), t.s("TypeIdentifier")),
                         "$host/d2l/le/content/$ou/viewContent/${t.optInt("TopicId")}/View",
-                        t.optBoolean("Unread"), Dates.parse(t.optString("DueDateTime")), t.optBoolean("IsLocked")))
+                        t.optBoolean("Unread"), Dates.parse(t.s("DueDateTime")), t.optBoolean("IsLocked")))
                 }
             }
-            return Module(m.optInt("ModuleId"), m.optString("Title"), Rich.html(m.opt("Description")), subs, tops)
+            return Module(m.optInt("ModuleId"), m.s("Title"), Rich.html(m.opt("Description")), subs, tops)
         }
         val mods = ArrayList<Module>()
         data.optJSONArray("Modules")?.let { for (i in 0 until it.length()) { val m = it.getJSONObject(i); if (!m.optBoolean("IsHidden")) mods.add(mapModule(m)) } }
@@ -146,15 +150,15 @@ class BrightspaceApi(host: String) {
         if (values != null) for (i in 0 until values.length()) {
             val g = values.getJSONObject(i)
             items.add(GradeItem(
-                g.optString("GradeObjectIdentifier", i.toString()), g.optString("GradeObjectName"),
-                g.optString("DisplayedGrade").ifEmpty { null },
+                g.s("GradeObjectIdentifier", i.toString()), g.s("GradeObjectName"),
+                g.s("DisplayedGrade").ifEmpty { null },
                 Nums.d(g.opt("PointsNumerator")), Nums.d(g.opt("PointsDenominator")),
                 Nums.d(g.opt("WeightedDenominator")), Nums.d(g.opt("WeightedNumerator")), Rich.text(g.opt("Comments"))))
         }
         var fp: Double? = null
         val fn = Nums.d(final?.opt("PointsNumerator")); val fd = Nums.d(final?.opt("PointsDenominator"))
         if (fn != null && fd != null && fd > 0) fp = fn / fd * 100
-        return Grades(items, final?.optString("DisplayedGrade")?.ifEmpty { null }, fp)
+        return Grades(items, final?.s("DisplayedGrade")?.ifEmpty { null }, fp)
     }
 
     suspend fun workItems(courseIds: List<Int>): List<WorkItem> {
@@ -170,12 +174,12 @@ class BrightspaceApi(host: String) {
             val out = ArrayList<WorkItem>()
             for (i in 0 until list.length()) {
                 val it = list.getJSONObject(i)
-                val kind = Kind.ofScheduled(it.optString("ItemUrl"))
+                val kind = Kind.ofScheduled(it.s("ItemUrl"))
                 val oid = it.optInt("OrgUnitId")
                 val completed = (it.has("DateCompleted") && !it.isNull("DateCompleted")) || it.optBoolean("IsExempt")
-                out.add(WorkItem("s:$oid:${it.optInt("ItemId")}:${kind.name}", oid, kind, it.optString("ItemName"),
-                    Dates.parse(it.optString("DueDate")) ?: Dates.parse(it.optString("EndDate")),
-                    it.optString("ItemUrl").ifEmpty { null }?.let { u -> host + u }, completed))
+                out.add(WorkItem("s:$oid:${it.optInt("ItemId")}:${kind.name}", oid, kind, it.s("ItemName"),
+                    Dates.parse(it.s("DueDate")) ?: Dates.parse(it.s("EndDate")),
+                    it.s("ItemUrl").ifEmpty { null }?.let { u -> host + u }, completed))
             }
             return out
         }
@@ -186,8 +190,8 @@ class BrightspaceApi(host: String) {
                 val folders = getJson(le("/$ou/dropbox/folders/")) as JSONArray
                 for (i in 0 until folders.length()) {
                     val f = folders.getJSONObject(i); if (f.optBoolean("IsHidden")) continue
-                    out.add(WorkItem("a:$ou:${f.optInt("Id")}", ou, WorkKind.ASSIGNMENT, f.optString("Name"),
-                        Dates.parse(f.optString("DueDate")) ?: Dates.parse(f.optJSONObject("Availability")?.optString("EndDate")),
+                    out.add(WorkItem("a:$ou:${f.optInt("Id")}", ou, WorkKind.ASSIGNMENT, f.s("Name"),
+                        Dates.parse(f.s("DueDate")) ?: Dates.parse(f.optJSONObject("Availability")?.s("EndDate")),
                         "$host/d2l/lms/dropbox/user/folder_submit_files.d2l?db=${f.optInt("Id")}&ou=$ou", false))
                 }
             }
@@ -196,8 +200,8 @@ class BrightspaceApi(host: String) {
                 val objs = q.optJSONArray("Objects") ?: JSONArray()
                 for (i in 0 until objs.length()) {
                     val quiz = objs.getJSONObject(i)
-                    out.add(WorkItem("q:$ou:${quiz.optInt("QuizId")}", ou, WorkKind.QUIZ, quiz.optString("Name"),
-                        Dates.parse(quiz.optString("DueDate")) ?: Dates.parse(quiz.optString("EndDate")),
+                    out.add(WorkItem("q:$ou:${quiz.optInt("QuizId")}", ou, WorkKind.QUIZ, quiz.s("Name"),
+                        Dates.parse(quiz.s("DueDate")) ?: Dates.parse(quiz.s("EndDate")),
                         "$host/d2l/lms/quizzing/user/quiz_summary.d2l?qi=${quiz.optInt("QuizId")}&ou=$ou", false))
                 }
             }
@@ -207,6 +211,14 @@ class BrightspaceApi(host: String) {
 }
 
 // MARK: decoding helpers
+
+/**
+ * Null-safe string read. Android's org.json returns the literal text "null" from optString()
+ * for a JSON null (the reference implementation returns the default), which would leak
+ * "null" into titles, codes and URLs. This returns the default for missing AND null values.
+ */
+internal fun JSONObject.s(key: String, default: String = ""): String = if (isNull(key)) default else optString(key, default)
+
 object Dates {
     private val formats = listOf("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", "yyyy-MM-dd'T'HH:mm:ss'Z'", "yyyy-MM-dd'T'HH:mm:ss.SSSXXX", "yyyy-MM-dd'T'HH:mm:ssXXX")
     fun parse(s: String?): Date? {
@@ -228,11 +240,11 @@ object Nums {
 object Rich {
     fun html(any: Any?): String {
         val o = any as? JSONObject ?: return ""
-        return o.optString("Html").ifEmpty { o.optString("Text") }
+        return o.s("Html").ifEmpty { o.s("Text") }
     }
     fun text(any: Any?): String? {
         val o = any as? JSONObject ?: return null
-        val s = o.optString("Text").ifEmpty { o.optString("Html") }
+        val s = o.s("Text").ifEmpty { o.s("Html") }
         return if (s.isEmpty()) null else s.replace(Regex("<[^>]+>"), "")
     }
 }

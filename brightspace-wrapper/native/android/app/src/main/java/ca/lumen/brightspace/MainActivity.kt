@@ -20,6 +20,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.*
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -32,6 +33,7 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.viewmodel.compose.viewModel
+import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -85,7 +87,7 @@ fun ConnectScreen(vm: AppViewModel) {
                 modifier = Modifier.fillMaxWidth())
         }
         Button(onClick = { showLogin = true }, enabled = host != null, modifier = Modifier.fillMaxWidth().padding(top = 8.dp)) {
-            Icon(Icons.Default.Login, null); Spacer(Modifier.width(8.dp)); Text("Sign in with Brightspace")
+            Icon(Icons.AutoMirrored.Filled.Login, null); Spacer(Modifier.width(8.dp)); Text("Sign in with Brightspace")
         }
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
             Icon(Icons.Default.Lock, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(16.dp))
@@ -100,6 +102,7 @@ fun ConnectScreen(vm: AppViewModel) {
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SchoolRow(name: String, host: String, hue: Double, selected: Boolean, onClick: () -> Unit) {
     val dark = isSystemDark()
@@ -122,20 +125,31 @@ fun SchoolRow(name: String, host: String, hue: Double, selected: Boolean, onClic
     }
 }
 
-/** The only WebView in the app: the official Brightspace sign-in. */
+/**
+ * The only WebView in the app: the official Brightspace sign-in.
+ * We don't guess from cookie names — after each page on the Brightspace host finishes loading,
+ * we ask the API who we are. The login is complete only when that call succeeds, which is
+ * robust to SSO redirects and to whenever (and however) the school sets its session cookie.
+ */
 @SuppressLint("SetJavaScriptEnabled")
 @Composable
 fun LoginWebView(host: String, onSignedIn: () -> Unit) {
-    var done by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
+    val api = remember(host) { BrightspaceApi(host) }
+    val state = remember { object { var done = false; var checking = false } }
     AndroidView(factory = { ctx ->
         WebView(ctx).apply {
             settings.javaScriptEnabled = true
             settings.domStorageEnabled = true
             webViewClient = object : WebViewClient() {
                 override fun onPageFinished(view: WebView?, url: String?) {
-                    if (done) return
-                    val cookie = CookieManager.getInstance().getCookie(host) ?: ""
-                    if (cookie.contains("d2lSessionVal")) { done = true; CookieManager.getInstance().flush(); onSignedIn() }
+                    if (state.done || state.checking || url?.startsWith(host) != true) return
+                    state.checking = true
+                    scope.launch {
+                        val ok = runCatching { api.whoami() }.isSuccess
+                        state.checking = false
+                        if (ok && !state.done) { state.done = true; CookieManager.getInstance().flush(); onSignedIn() }
+                    }
                 }
             }
             loadUrl("$host/d2l/login")
@@ -144,6 +158,7 @@ fun LoginWebView(host: String, onSignedIn: () -> Unit) {
 }
 
 /** Simple full-screen dialog host. */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun Dialog(onDismiss: () -> Unit, content: @Composable () -> Unit) {
     androidx.compose.ui.window.Dialog(onDismissRequest = onDismiss,
@@ -158,7 +173,7 @@ fun Dialog(onDismiss: () -> Unit, content: @Composable () -> Unit) {
     }
 }
 
-@Composable fun isSystemDark() = androidx.compose.foundation.isSystemInDarkTheme()
+@Composable fun isSystemDark() = isDarkTheme()
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

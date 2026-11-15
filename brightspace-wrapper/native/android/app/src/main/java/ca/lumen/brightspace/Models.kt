@@ -22,8 +22,10 @@ data class Course(
     val end: Date?,
     val pinned: Boolean,
     val hasImage: Boolean,
+    /** Assigned by position so neighbouring classes never share a color; falls back to a hash. */
+    val hueOverride: Double? = null,
 ) {
-    val hue: Double get() = Palette.hue(if (code.isNotEmpty()) code else name)
+    val hue: Double get() = hueOverride ?: Palette.hue(if (code.isNotEmpty()) code else name)
 
     val termLabel: String
         get() {

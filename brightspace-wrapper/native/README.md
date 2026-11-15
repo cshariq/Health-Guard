@@ -46,12 +46,46 @@ stable color computed the same way as the web app, so a class looks the same eve
 
 ## Android (Kotlin / Jetpack Compose)
 
-`native/android/` — a Gradle project; Compose Material 3; cookies via `CookieManager`,
-requests via `HttpURLConnection` on coroutines.
+`native/android/` — Compose Material 3; cookies via `CookieManager`, requests via
+`HttpURLConnection` on coroutines. **This one is built and tested** (see below).
 
-1. Open `native/android/` in Android Studio, or `./gradlew assembleDebug`.
-2. minSdk 26, targetSdk 34. Dependencies are in `app/build.gradle.kts` (Compose BOM +
-   material-icons-extended).
+| | |
+|---|---|
+| ![Classes](../docs/android-classes.png) | ![Grades, dark](../docs/android-grades-dark.png) |
+
+**Build** (JDK 17+ and the Android SDK with platform 34 / build-tools 34; set `ANDROID_HOME` or
+`sdk.dir` in `native/android/local.properties`):
+
+```bash
+cd native/android
+./gradlew assembleDebug        # → app/build/outputs/apk/debug/app-debug.apk
+adb install -r app/build/outputs/apk/debug/app-debug.apk
+```
+
+Or just open `native/android/` in Android Studio. minSdk 26, targetSdk 34. The debug APK is signed
+with the debug key; a Play Store build needs your own release signing config.
+
+**Test** — the tests run the *real* client and the *real* Compose screens against a fake
+Brightspace, so start that first:
+
+```bash
+node demo/mock-server.mjs            # fake Brightspace on http://127.0.0.1:8091
+cd native/android && ./gradlew testDebugUnitTest
+```
+
+- `BrightspaceApiTest` (7): courses, work items + completion, announcements, content tree,
+  weighted grades, signed-out detection.
+- `ScreensRenderTest` (3): renders every screen headlessly (Robolectric native graphics) and
+  writes screenshots to `app/build/screenshots/`.
+- Both skip themselves if the mock isn't running — check the report says `skipped=0`.
+
+**Try it on an emulator against the mock:** debug builds allow `http://`, so choose *Another
+school* and enter `http://10.0.2.2:8091` (the emulator's name for your computer), then sign in
+(the mock's login page sets the session cookie).
+
+**How login works:** the only WebView is Brightspace's own sign-in. After each page on the
+school's host finishes, the app calls `whoami`; sign-in is complete only when that succeeds, so it
+doesn't depend on cookie names or when the school sets them.
 
 ## Windows (C# / WPF)
 
@@ -65,11 +99,17 @@ login, requests via `HttpClient`.
 
 ## Status — built vs. compiled
 
-All three are written natively against the Valence API and the platform cookie stores. They
-were authored in a Linux environment, so they have **not been compiled** — expect to resolve
-a few small things on first build in Xcode / Android Studio / Visual Studio (a missing import,
-an SDK version nudge). The networking and models are the same logic the web app uses and is
-tested against; the UI is standard framework code.
+| Platform | Compiled | Tested |
+|---|---|---|
+| **Android** | ✅ builds an APK | ✅ 10 tests: real API client + real screens against the mock |
+| iOS / macOS | ❌ not compiled | — |
+| Windows | ❌ not compiled | — |
+
+iOS and Windows were written in a Linux environment, so expect a few small fixes on first build in
+Xcode / Visual Studio. One known difference: their login screens still decide "signed in" by looking
+for a cookie named `d2lSessionVal`, whereas Android verifies with a real `whoami` call. If a school
+sets that cookie before login, those two would continue too early — porting Android's approach is
+the fix.
 
 ## Privacy
 

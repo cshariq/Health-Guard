@@ -65,7 +65,7 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
             if (force) api.clearCache()
             try {
                 me = runCatching { api.whoami() }.getOrNull()
-                courses = api.courses()
+                courses = withDistinctHues(api.courses())
                 val ids = currentCourses().map { it.id }
                 work = dedupe(runCatching { api.workItems(ids) }.getOrElse { emptyList() })
             } catch (e: ApiException) {
@@ -75,6 +75,13 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
             }
             loading = false
         }
+    }
+
+    /** Stable by course id, so a class keeps its color across launches. */
+    private fun withDistinctHues(cs: List<Course>): List<Course> {
+        val palette = listOf(265.0, 150.0, 30.0, 230.0, 340.0, 85.0, 195.0, 300.0, 10.0, 120.0, 250.0, 60.0)
+        val order = cs.sortedBy { it.id }.map { it.id }
+        return cs.map { it.copy(hueOverride = palette[order.indexOf(it.id) % palette.size]) }
     }
 
     private fun dedupe(items: List<WorkItem>): List<WorkItem> {

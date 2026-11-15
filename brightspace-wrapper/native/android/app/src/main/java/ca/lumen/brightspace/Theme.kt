@@ -7,6 +7,7 @@ import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.luminance
 
 object Palette {
     /** Stable hue (degrees) for a course — mirrors the web app / iOS. */
@@ -37,3 +38,7 @@ fun LumenTheme(mode: String, content: @Composable () -> Unit) {
         lightColorScheme(primary = accent, secondary = accent)
     MaterialTheme(colorScheme = colors, content = content)
 }
+
+/** True when the theme actually applied is dark (respects the Settings override, not just the system setting). */
+@Composable
+fun isDarkTheme(): Boolean = MaterialTheme.colorScheme.background.luminance() < 0.5f

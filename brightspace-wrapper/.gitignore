@@ -7,3 +7,6 @@ native/windows/**/bin/
 native/windows/**/obj/
 *.xcuserstate
 native/ios/**/xcuserdata/
+local.properties
+*.apk
+*.aab
