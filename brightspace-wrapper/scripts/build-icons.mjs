@@ -13,7 +13,8 @@ const names = [
   'inbox','visibility_off','visibility','filter_list','done_all','notifications','article','folder_open',
   'history','unfold_more','unfold_less','swap_horiz','login','task_alt','radio_button_unchecked','lock',
   'table_chart','image','auto_stories','today','info','wifi_off','tune','view_agenda','grid_view','videocam',
-  'add','delete','content_copy','upload_file','person','send','logout','edit','archive'
+  'add','delete','content_copy','upload_file','person','send','logout','edit','archive',
+  'admin_panel_settings','timer','reply','mail','key','block','rule'
 ];
 const out = {};
 for (const n of names) {

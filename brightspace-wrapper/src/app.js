@@ -130,6 +130,7 @@
         courses.length === 0 && store.courses ? h('div.nav-hint', 'No current classes') : null,
         h('div.nav-divider'),
         navItem('#/archived', 'inbox', 'Past & hidden classes', r === 'archived'),
+        (L.ext?.navItems?.() || []).map((n) => navItem(n.href, n.icon, n.label, r === n.name)),
         opts.standalone ? null : opts.web
           ? h('a.nav-item', { href: `${api.base}/d2l/home`, target: '_blank', rel: 'noopener', title: 'Open Brightspace' }, h('span.nav-icon', icon('open_in_new')), h('span.nav-label', 'Open Brightspace'))
           : h('a.nav-item', { href: `${api.base}/d2l/home?lumen=off`, title: 'Classic Brightspace' }, h('span.nav-icon', icon('swap_horiz')), h('span.nav-label', 'Classic Brightspace')),
@@ -138,11 +139,12 @@
 
     function openAccount() {
       const me = store.me;
-      L.dialog({
+      const close = L.dialog({
         title: me ? `${me.FirstName} ${me.LastName}` : 'Account',
         body: h('div.stack',
           me && h('p.muted', me.UniqueName || ''),
           h('p', opts.connectionNote || 'Lumen reads your classes straight from Brightspace using the session you are already signed into. Nothing is sent anywhere else.'),
+          opts.accountActions?.(() => close()),
           opts.onDisconnect
             ? h('button.tonal-btn', { type: 'button', onclick: opts.onDisconnect }, icon(opts.disconnectIcon || 'swap_horiz'), opts.disconnectLabel || 'Disconnect / switch school')
             : h('a.text-btn', { href: `${api.base}/d2l/logout` }, icon('login'), 'Sign out of Brightspace')),
@@ -186,6 +188,7 @@
       const hash = location.hash.replace(/^#/, '') || '/';
       const parts = hash.split('/').filter(Boolean);
       if (parts[0] === 'c' && parts[1]) return { name: 'course', params: { id: parts[1], tab: parts[2] || 'stream', rest: parts.slice(3) } };
+      if (L.ext?.pages?.[parts[0]]) return { name: parts[0], params: { rest: parts.slice(1) } };   // host-provided pages
       if (['todo', 'calendar', 'grades', 'archived'].includes(parts[0])) return { name: parts[0], params: { tab: parts[1], offset: parts[1] } };
       return { name: 'home', params: {} };
     }
@@ -210,7 +213,7 @@
       renderDrawer(route);
 
       if (store.error && !store.courses) { main.replaceChildren(L.errorState(store.error, () => store.load(true))); return; }
-      const view = L.views[route.name] || L.views.home;
+      const view = L.views[route.name] || L.ext?.pages?.[route.name] || L.views.home;
       main.replaceChildren(view(ctx, route.params));
     }
 

@@ -111,3 +111,55 @@
 .lumen-app .code-card .form-hint { color: inherit; opacity: .8; }
 .lumen-app .code-value { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size: 30px; letter-spacing: 2px; font-weight: 600; user-select: all; }
 .lumen-app .people .group-title { margin-top: 20px; }
+
+/* ---------- added with rubrics, timed quizzes, discussions, admin ---------- */
+.lumen-app [hidden] { display: none !important; }
+.lumen-app .auth-or { text-align: center; color: var(--md-on-surface-variant); font-size: 12px; }
+.lumen-app .notice.info { background: var(--md-secondary-container); color: var(--md-on-secondary-container); }
+.lumen-app .form-actions.tight { margin-top: 4px; }
+.lumen-app .text-btn.on-container { color: inherit; }
+.lumen-app .post-head .icon-btn { flex: none; }
+
+/* rubric */
+.lumen-app .rubric-box { padding: 12px; border-radius: var(--radius-m); background: var(--md-surface-container-lowest); border: 1px solid var(--md-outline-variant); }
+.lumen-app .rubric-rows { display: grid; gap: 8px; }
+.lumen-app .rubric-row { display: flex; gap: 8px; align-items: center; }
+.lumen-app table.rubric { width: 100%; margin-top: 14px; border-collapse: collapse; }
+.lumen-app table.rubric th, .lumen-app table.rubric td { padding: 8px 10px; text-align: left; border-bottom: 1px solid var(--md-outline-variant); }
+.lumen-app table.rubric th { font-size: 12px; font-weight: 500; color: var(--md-on-surface-variant); }
+.lumen-app table.rubric .num { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.lumen-app .rubric-grade { display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end; flex-basis: 100%; }
+.lumen-app .rubric-cell { display: flex; flex-direction: column; gap: 4px; }
+.lumen-app .rubric-cell .score { min-height: 44px; display: flex; align-items: center; }
+
+/* quiz builder + taking */
+.lumen-app .quiz-q .form-row { align-items: flex-end; }
+.lumen-app .quiz-q .form-row > .form-field:nth-child(2) { flex: 0 0 170px; }
+.lumen-app .quiz-choice input[type="checkbox"], .lumen-app .quiz-option input[type="checkbox"] { width: 20px; height: 20px; flex: none; accent-color: var(--md-primary); }
+.lumen-app .quiz-take { display: flex; flex-direction: column; gap: 12px; }
+.lumen-app .quiz-clock { position: sticky; top: calc(var(--top) + 56px); z-index: 5; align-self: flex-end; display: inline-flex; align-items: center; gap: 8px; padding: 8px 16px; border-radius: 20px; background: var(--md-inverse-surface); color: var(--md-inverse-on-surface); font-weight: 500; font-variant-numeric: tabular-nums; box-shadow: var(--elev-2); }
+.lumen-app .quiz-clock .icon { --icon-size: 18px; }
+.lumen-app .quiz-clock.low { background: var(--md-error); color: var(--md-on-error); }
+.lumen-app .marking { display: grid; gap: 12px; padding-left: 54px; }
+.lumen-app .marking-row { display: grid; gap: 8px; }
+@media (max-width: 599px) { .lumen-app .marking { padding-left: 0; } .lumen-app .quiz-q .form-row > .form-field:nth-child(2) { flex: 1; } }
+
+/* discussions */
+.lumen-app .reply { padding-left: 28px; border-left: 3px solid var(--md-outline-variant); }
+.lumen-app .post-title .pill, .lumen-app .row-title .pill { margin-left: 8px; }
+.lumen-app .pill.off { background: var(--md-surface-container-highest); color: var(--md-on-surface-variant); }
+@media (max-width: 599px) { .lumen-app .reply { padding-left: 12px; } }
+
+/* manage + admin */
+.lumen-app .manage-actions { display: flex; flex: none; }
+.lumen-app .admin { display: grid; gap: 16px; max-width: 860px; }
+.lumen-app .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 12px; }
+.lumen-app .stat { padding: 16px; border-radius: var(--radius-l); background: var(--md-primary-container); color: var(--md-on-primary-container); }
+.lumen-app .stat .form-hint { color: inherit; opacity: .8; }
+.lumen-app .stat-n { font-family: var(--font-display); font-size: 28px; line-height: 36px; }
+.lumen-app .admin p { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin: 4px 0; }
+.lumen-app .admin p .icon { --icon-size: 20px; color: var(--md-primary); }
+.lumen-app .admin-row { flex-wrap: wrap; }
+.lumen-app .admin-actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; }
+.lumen-app .reset-link { display: block; padding: 10px 12px; border-radius: var(--radius-s); background: var(--md-surface-container); word-break: break-all; user-select: all; }
+.lumen-app .list-btn { cursor: pointer; }

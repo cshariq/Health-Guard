@@ -7,7 +7,7 @@
   "scripts": {
     "start": "node web/server.mjs",
     "classes": "node classes/server.mjs",
-    "test:classes": "node --test classes/test.mjs"
+    "test:classes": "node --test classes/test.mjs classes/test-features.mjs"
   },
   "engines": {
     "node": ">=22.5"

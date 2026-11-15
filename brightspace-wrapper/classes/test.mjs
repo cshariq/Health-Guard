@@ -132,7 +132,7 @@ test('quiz: answer key hidden until handed in, auto-graded, one attempt', async 
   assert.ok(before.questions.every((q) => q.answer === undefined), 'no answer key before the attempt');
   assert.equal((await student.post(`/api/classes/${classId}/quizzes/${quizId}/attempt`, { answers: [1] })).status, 400);
   const r = await student.post(`/api/classes/${classId}/quizzes/${quizId}/attempt`, { answers: [1, 1] });
-  assert.deepEqual(r.body, { score: 2, points: 3 });
+  assert.deepEqual(r.body, { score: 2, points: 3, pending: false });
   assert.equal((await student.post(`/api/classes/${classId}/quizzes/${quizId}/attempt`, { answers: [1, 0] })).status, 400, 'one attempt only');
   const after = (await student.get(`/api/classes/${classId}/quizzes/${quizId}`)).body;
   assert.equal(after.questions[0].answer, 1); assert.deepEqual(after.attempt.answers, [1, 1]);

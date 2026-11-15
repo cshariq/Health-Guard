@@ -18,19 +18,30 @@ Needs Node 22.5+ (it uses Node's built-in SQLite).
 
 ## What it does
 
-**Anyone** can create an account. Whoever creates a class is its teacher; everyone who joins with the
-class code is a student. One person can teach some classes and be a student in others.
+**Anyone** can create an account (or sign in with the school's single sign-on). Whoever creates a
+class is its teacher; everyone who joins with the class code is a student. One person can teach some
+classes and be a student in others. The first account on a new server is its administrator.
 
 | | Teachers | Students |
 |---|---|---|
-| **Classes** | Create a class, share its join code, remove students, archive | Join with a code, leave |
-| **Stream** | Post and delete announcements | Read them |
-| **Classwork** | Modules, notes, links, file uploads | Browse and search |
-| **Assignments** | Title, instructions, due date, points | Hand in text and/or a file; change it until graded |
-| **Grading** | See every hand-in, give a grade and feedback | See the grade and feedback |
-| **Quizzes** | Multiple-choice questions with points | One attempt, marked instantly, answer key shown afterwards |
-| **Grades** | Gradebook: students × items, overall % | Their own grades and overall % |
+| **Classes** | Create, share/reset the join code, add co-teachers, remove students, archive | Join with a code, leave |
+| **Stream** | Post, edit and delete announcements | Read them |
+| **Classwork** | Modules, notes, links, file uploads; edit any of it | Browse and search |
+| **Assignments** | Instructions, due date, points or a **rubric**; edit later | Hand in text and/or a file; change it until graded |
+| **Grading** | See every hand-in; grade per rubric row or as one number, with feedback | See the grade, rubric breakdown and feedback |
+| **Quizzes** | Multiple choice, checkboxes, short answer (auto-marked), written answer (you mark); **time limit**; **retakes** | Timer, answers saved as they go, best attempt counts |
+| **Discussions** | Start threads, reply, delete anything | Start threads, reply, delete their own |
+| **Grades** | Gradebook: students × items, overall %, **CSV export** | Their own grades and overall % |
 | **To-do / Calendar** | Upcoming deadlines for classes they teach | What's assigned, missing and done |
+| **Account** | Name, password, email notifications on/off, forgot-password | same |
+
+**Administrators** get an Admin page: usage numbers; turn sign-ups on/off; restrict class creation to
+approved teachers; approve teachers, make admins, turn accounts off, create password-reset links, delete
+accounts; archive, restore or delete any class; and a log of every email sent.
+
+| Timed quiz | Rubric grading | Admin |
+|---|---|---|
+| ![](../docs/classes-timed-quiz.png) | ![](../docs/classes-rubric.png) | ![](../docs/classes-admin.png) |
 
 ## How it's built
 
@@ -51,10 +62,16 @@ Data lives in `classes/data/` (`lumen.db` + `files/`). Back up that folder; dele
 | Variable | Default | |
 |---|---|---|
 | `PORT` | `8200` | |
-| `PUBLIC_URL` | `http://localhost:$PORT` | With `https://`, cookies are marked `Secure`. Put it behind HTTPS for real use. |
+| `PUBLIC_URL` | `http://localhost:$PORT` | Used in emailed links and SSO. With `https://`, cookies are marked `Secure`. Put it behind HTTPS for real use. |
 | `LUMEN_DATA` | `classes/data` | Where the database and uploads go |
-| `LUMEN_ALLOW_SIGNUP` | `true` | Set `false` to stop new accounts |
+| `LUMEN_ALLOW_SIGNUP` | `true` | Starting value; admins can change it in the Admin page |
+| `LUMEN_ADMIN_EMAILS` | | Comma-separated emails that are always administrators |
 | `LUMEN_MAX_UPLOAD_MB` | `25` | Per-file upload limit |
+| `SMTP_URL` | | `smtps://user:pass@host:465` or `smtp://user:pass@host:587`. Without it, emails are only logged in Admin → Email, and admins hand out reset links. |
+| `SMTP_FROM` | `Lumen Classes <no-reply@localhost>` | |
+| `OIDC_ISSUER`, `OIDC_CLIENT_ID`, `OIDC_CLIENT_SECRET`, `OIDC_NAME` | | Single sign-on with any OpenID Connect provider (Google, Microsoft Entra, a district IdP). Redirect URI: `PUBLIC_URL/auth/sso/callback`. `OIDC_NAME` is the button label. |
+
+Emails go out for new announcements, new assignments and quizzes, grades, and password resets.
 
 ## Security
 
@@ -71,14 +88,17 @@ Data lives in `classes/data/` (`lumen.db` + `files/`). Back up that folder; dele
 ## Tests
 
 ```bash
-npm run test:classes                         # 12 API tests: flows + permission rules
-node classes/server.mjs &                    # then, with Playwright installed and a fresh LUMEN_DATA:
-node classes/e2e.cjs                         # full teacher + student story in a real browser
+npm run test:classes     # 25 API tests: flows, permission rules, email (fake SMTP), SSO (fake provider)
+# Browser tests (need Playwright), against a server with a fresh LUMEN_DATA folder:
+node classes/server.mjs &
+node classes/e2e.cjs && node classes/e2e-features.cjs
 ```
 
-## Not there yet
+## Known limits
 
-Honest list of what a school would still want before dropping Brightspace: discussions, rubrics,
-question types beyond multiple choice, quiz time limits and retakes, editing items after creating them
-(today you delete and recreate), co-teachers, email notifications, password reset, single sign-on,
-grade export, and an admin console. Sessions and rate limits are in-memory/SQLite, so run one instance.
+- One server instance (SQLite, in-memory rate limits). Fine for a school; not built to scale out.
+- Email was tested against a plain local SMTP server; the TLS/STARTTLS and sign-in paths follow the
+  standard but haven't been run against a real provider yet.
+- SSO was tested against a fake OpenID Connect provider, not a real Google/Microsoft tenant.
+- Quizzes: no question banks, randomised order or per-student time extensions. No plagiarism checking,
+  no parent/guardian accounts, no SIS roster import.

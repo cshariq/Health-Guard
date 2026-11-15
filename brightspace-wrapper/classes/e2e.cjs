@@ -128,10 +128,9 @@ const SHOTS = process.argv[3] || null;
   /* ---- student takes the quiz ---- */
   await s.goto(BASE + '/#/c/1/work'); await s.waitForSelector('.work-row');
   await s.click('.work-row:has-text("Cells check-in")');
+  await s.click('button:has-text("Start quiz")');
   await s.waitForSelector('.quiz-card');
   assert.equal(await s.locator('.quiz-option.correct').count(), 0, 'answer key hidden before the attempt');
-  await s.click('button:has-text("Hand in quiz")');
-  await s.waitForSelector('.form-error:has-text("Answer question 1")');
   await s.locator('.quiz-card >> nth=0 >> label:has-text("Mitochondria")').click();
   await s.locator('.quiz-card >> nth=1 >> label:has-text("False")').click();
   await s.click('button:has-text("Hand in quiz")');
