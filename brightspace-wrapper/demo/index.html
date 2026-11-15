@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en" class="lumen">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Lumen demo</title>
+  <link rel="stylesheet" href="../src/app.css">
+</head>
+<body>
+  <div id="app"></div>
+  <script src="../src/icons.js"></script>
+  <script src="../src/theme.js"></script>
+  <script src="../src/ui.js"></script>
+  <script src="../src/api.js"></script>
+  <script src="../src/views.js"></script>
+  <script src="../src/app.js"></script>
+  <script src="mock-brightspace.js"></script>
+  <script>
+    // Same code path as the extension, but backed by a fake Brightspace.
+    Lumen.mount(document.getElementById('app'), Lumen.createApi({ fetch: window.mockBrightspaceFetch }), { initialRoute: '#/' });
+  </script>
+</body>
+</html>

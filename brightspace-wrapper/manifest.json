@@ -1,0 +1,43 @@
+{
+  "manifest_version": 3,
+  "name": "Lumen for Brightspace",
+  "short_name": "Lumen",
+  "version": "1.0.0",
+  "description": "A clean, Material You–style home for Brightspace: classes, to-do, calendar and grades in one organized place.",
+  "icons": { "16": "assets/icon-16.png", "32": "assets/icon-32.png", "48": "assets/icon-48.png", "128": "assets/icon-128.png" },
+  "host_permissions": [
+    "https://brightspace.carleton.ca/*",
+    "https://learn.uwaterloo.ca/*",
+    "https://*.brightspace.com/*"
+  ],
+  "content_scripts": [
+    {
+      "matches": [
+        "https://brightspace.carleton.ca/d2l/home*",
+        "https://learn.uwaterloo.ca/d2l/home*",
+        "https://*.brightspace.com/d2l/home*"
+      ],
+      "js": ["src/icons.js", "src/theme.js", "src/ui.js", "src/api.js", "src/views.js", "src/app.js", "src/boot.js"],
+      "css": ["src/app.css"],
+      "run_at": "document_start"
+    },
+    {
+      "matches": [
+        "https://brightspace.carleton.ca/d2l/*",
+        "https://learn.uwaterloo.ca/d2l/*",
+        "https://*.brightspace.com/d2l/*"
+      ],
+      "exclude_matches": [
+        "https://brightspace.carleton.ca/d2l/api/*",
+        "https://learn.uwaterloo.ca/d2l/api/*",
+        "https://*.brightspace.com/d2l/api/*",
+        "https://brightspace.carleton.ca/d2l/login*",
+        "https://learn.uwaterloo.ca/d2l/login*",
+        "https://*.brightspace.com/d2l/login*"
+      ],
+      "js": ["src/icons.js", "src/ui.js", "src/fab.js"],
+      "css": ["src/fab.css"],
+      "run_at": "document_idle"
+    }
+  ]
+}

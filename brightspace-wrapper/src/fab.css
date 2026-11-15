@@ -1,0 +1,4 @@
+.lumen-fab{position:fixed;right:20px;bottom:20px;z-index:2147483000;display:flex;align-items:center;gap:8px;height:48px;padding:0 18px 0 14px;border-radius:16px;background:oklch(0.91 0.06 270);color:oklch(0.27 0.09 270)!important;font:500 14px/1 "Google Sans Text","Roboto Flex",Roboto,system-ui,sans-serif;text-decoration:none!important;box-shadow:0 1px 3px rgb(0 0 0/.2),0 4px 10px rgb(0 0 0/.12);transition:box-shadow .2s,transform .2s}
+.lumen-fab:hover{box-shadow:0 2px 6px rgb(0 0 0/.22),0 8px 20px rgb(0 0 0/.16);transform:translateY(-1px)}
+.lumen-fab svg{width:22px;height:22px;fill:currentColor}
+@media print{.lumen-fab{display:none}}
