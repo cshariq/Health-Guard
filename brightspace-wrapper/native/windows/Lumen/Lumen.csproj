@@ -1,23 +1,21 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <!--
-    Lumen for Brightspace - Windows shell (WPF + WebView2).
-    Build:  dotnet build  (or open in Visual Studio 2022)
+    Lumen for Brightspace - Windows (fully native WPF).
+    The only WebView2 is the Brightspace sign-in window; every other screen is native WPF.
+    Build:  dotnet build   (or open in Visual Studio 2022)
     Run:    dotnet run
-    Run native/sync-assets.sh first so WebAssets/ is populated.
+    Needs the WebView2 Runtime (preinstalled on current Windows 10/11).
   -->
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
     <TargetFramework>net8.0-windows</TargetFramework>
     <UseWPF>true</UseWPF>
     <Nullable>enable</Nullable>
+    <LangVersion>latest</LangVersion>
     <AssemblyName>Lumen</AssemblyName>
     <ApplicationManifest>app.manifest</ApplicationManifest>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.2792.45" />
-  </ItemGroup>
-  <ItemGroup>
-    <!-- Ship the bundled web UI next to the exe. -->
-    <Content Include="WebAssets\**\*" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 </Project>

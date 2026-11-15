@@ -13,10 +13,13 @@ interface inspired by **Material You** and **Google Classroom**. Works with:
 |---|---|---|
 | ![](docs/class-stream.png) | ![](docs/classwork.png) | ![](docs/todo.png) |
 
-**Two ways to use it:**
+**Three ways to use it:**
 - **Browser extension.** Lumen replaces the Brightspace homepage itself. Install steps are below.
 - **Website** (`web/`). Lumen on its own address: connect through the extension, sign in with Brightspace (OAuth),
   or try the demo. See [web/README.md](web/README.md).
+- **Native apps** (`native/`). Fully native clients for iOS/macOS (SwiftUI), Android (Jetpack Compose) and
+  Windows (WPF). You sign in on the official Brightspace page and the app reads the session cookie to load your
+  classes — no extension, no server. See [native/README.md](native/README.md).
 
 ## What you get
 

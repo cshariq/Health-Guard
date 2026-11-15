@@ -1,41 +1,42 @@
-//  LoginWindow.xaml.cs — the official Brightspace sign-in, in a shared-cookie WebView2.
-
+//  LoginWindow.xaml.cs — the ONLY WebView in the app: the official Brightspace sign-in.
+//  On success it hands back the session cookie as a header string (nothing is stored here).
 using System;
 using System.Linq;
 using System.Windows;
 using Microsoft.Web.WebView2.Core;
 
-namespace Lumen
+namespace Lumen;
+
+public partial class LoginWindow : Window
 {
-    public partial class LoginWindow : Window
+    private readonly string _host;
+    public string? CookieHeader { get; private set; }
+    private bool _done;
+
+    public LoginWindow(string host)
     {
-        private readonly CoreWebView2Environment _env;
-        private readonly string _host;
-        private readonly Action _onSignedIn;
-        private bool _done;
+        InitializeComponent();
+        _host = host;
+        Loaded += OnLoaded;
+    }
 
-        public LoginWindow(CoreWebView2Environment env, string host, Action onSignedIn)
+    private async void OnLoaded(object sender, RoutedEventArgs e)
+    {
+        var dataFolder = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Lumen", "WebView2");
+        var env = await CoreWebView2Environment.CreateAsync(null, dataFolder);
+        await Web.EnsureCoreWebView2Async(env);
+        Web.CoreWebView2.NavigationCompleted += async (_, _) =>
         {
-            InitializeComponent();
-            _env = env; _host = host; _onSignedIn = onSignedIn;
-            Loaded += OnLoaded;
-        }
-
-        private async void OnLoaded(object sender, RoutedEventArgs e)
-        {
-            await LoginWeb.EnsureCoreWebView2Async(_env);   // same env => cookies shared with MainWindow
-            LoginWeb.CoreWebView2.NavigationCompleted += async (_, _) =>
+            if (_done) return;
+            var cookies = await Web.CoreWebView2.CookieManager.GetCookiesAsync(_host);
+            if (cookies.Any(c => c.Name.StartsWith("d2lSessionVal")))
             {
-                if (_done) return;
-                var cookies = await LoginWeb.CoreWebView2.CookieManager.GetCookiesAsync(_host);
-                if (cookies.Any(c => c.Name.StartsWith("d2lSessionVal")))
-                {
-                    _done = true;
-                    _onSignedIn();
-                    Close();
-                }
-            };
-            LoginWeb.CoreWebView2.Navigate($"{_host}/d2l/login");
-        }
+                _done = true;
+                CookieHeader = string.Join("; ", cookies.Select(c => $"{c.Name}={c.Value}"));
+                DialogResult = true;
+                Close();
+            }
+        };
+        Web.CoreWebView2.Navigate($"{_host}/d2l/login");
     }
 }
